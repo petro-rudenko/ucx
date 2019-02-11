@@ -11,6 +11,7 @@ dist_examples_DATA = \
 	ucp_hello_world.c \
 	uct_hello_world.c \
 	ucx_profiling.c \
+	ucp_mmap_odp.c \
 	ucp_client_server.c
 
 EXAMPLE_CC_FLAGS = -lucs -lucm -I$(includedir) -L$(libdir) -Wall -Werror -Wl,-rpath,$(libdir)
@@ -20,6 +21,7 @@ installcheck-local:
 	$(CC) -o uct_hello_world   $(examplesdir)/uct_hello_world.c   -luct $(EXAMPLE_CC_FLAGS) -pedantic
 	$(CC) -o ucp_hello_world   $(examplesdir)/ucp_hello_world.c   -lucp $(EXAMPLE_CC_FLAGS) -pedantic
 	$(CC) -o ucp_client_server $(examplesdir)/ucp_client_server.c -lucp $(EXAMPLE_CC_FLAGS) -pedantic
+	$(CC) -o ucp_mmap_odp      $(examplesdir)/ucp_mmap_odp.c      -lucp $(EXAMPLE_CC_FLAGS) -pedantic
 	$(CC) -o ucx_profiling     $(examplesdir)/ucx_profiling.c     -lucs $(EXAMPLE_CC_FLAGS) -Wall -lm
 	$(RM) *.o uct_hello_world ucp_hello_world ucp_client_server ucx_profiling
 
@@ -29,6 +31,7 @@ noinst_PROGRAMS = \
 	ucp_hello_world \
 	uct_hello_world \
 	ucx_profiling \
+	ucp_mmap_odp \
 	ucp_client_server
 
 ucp_hello_world_SOURCES  = ucp_hello_world.c
@@ -45,6 +48,11 @@ ucp_client_server_SOURCES  = ucp_client_server.c
 ucp_client_server_CFLAGS   = $(BASE_CFLAGS)
 ucp_client_server_CPPFLAGS = $(BASE_CPPFLAGS)
 ucp_client_server_LDADD    = $(top_builddir)/src/ucp/libucp.la
+
+ucp_mmap_odp_SOURCES  = ucp_mmap_odp.c
+ucp_mmap_odp_CFLAGS   = $(BASE_CFLAGS)
+ucp_mmap_odp_CPPFLAGS = $(BASE_CPPFLAGS)
+ucp_mmap_odp_LDADD    = $(top_builddir)/src/ucp/libucp.la
 
 ucx_profiling_SOURCES  = ucx_profiling.c
 ucx_profiling_CFLAGS   = $(BASE_CFLAGS)

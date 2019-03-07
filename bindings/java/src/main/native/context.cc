@@ -18,6 +18,7 @@ Java_org_ucx_jucx_ucp_UcpContext_createContextNative(JNIEnv *env, jclass cls,
 {
     ucp_params_t ucp_params = { 0 };
     ucp_context_h ucp_context;
+    ucs_status_t status;
     jfieldID field;
 
     jclass jucx_param_class = env->GetObjectClass(jucx_ctx_params);
@@ -47,7 +48,13 @@ Java_org_ucx_jucx_ucp_UcpContext_createContextNative(JNIEnv *env, jclass cls,
                                                          field);
     }
 
-    ucs_status_t status = ucp_init(&ucp_params, NULL, &ucp_context);
+    // Prevent handling sinals from JVM.
+    status = ucs_global_opts_set_value("ERROR_SIGNALS", "");
+    if (status != UCS_OK) {
+        JNU_ThrowExceptionByStatus(env, status);
+    }
+
+    status = ucp_init(&ucp_params, NULL, &ucp_context);
     if (status != UCS_OK) {
         JNU_ThrowExceptionByStatus(env, status);
     }

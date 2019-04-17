@@ -75,3 +75,48 @@ Java_org_ucx_jucx_ucp_UcpEndpoint_destroyEndpointNative(JNIEnv *env, jclass cls,
 {
     ucp_ep_destroy((ucp_ep_h) ep_ptr);
 }
+
+JNIEXPORT void JNICALL
+Java_org_ucx_jucx_ucp_UcpEndpoint_getNonBlockingNative(JNIEnv *env, jclass cls,
+                                                       jlong ep_ptr, jobject data,
+                                                       jobject rmem, jobject clbk)
+{
+    jfieldID field;
+    ucp_rkey_h rkey_p;
+    ucs_status_t status;
+
+    jclass ucp_rmem_cls = env->GetObjectClass(rmem);
+    // 1. Get remote memory address from UcpMemory object.
+    field = env->GetFieldID(ucp_rmem_cls, "address", "J");
+    uint64_t remote_address = env->GetLongField(rmem, field);
+
+    // 2. Get remoteKey from UcpMemory object.
+    field = env->GetFieldID(ucp_rmem_cls, "remoteKey", "Ljava/nio/ByteBuffer;");
+    jobject rkey = env->GetObjectField(rmem, field);
+    void *rkeyBuffer = env->GetDirectBufferAddress(rkey);
+    status = ucp_ep_rkey_unpack((ucp_ep_h)ep_ptr, rkeyBuffer, &rkey_p);
+    if (status != UCS_OK) {
+        JNU_ThrowExceptionByStatus(env, status);
+    }
+
+    // 3. Get result buffer
+    void *result_address = env->GetDirectBufferAddress(data);
+    size_t result_size = env->GetDirectBufferCapacity(data);
+
+    ucs_status_ptr_t request = ucp_get_nb((ucp_ep_h)ep_ptr, result_address, result_size,
+                                          remote_address, rkey_p, send_callback);
+    if (UCS_PTR_IS_PTR(request)) {
+        ((struct jucx_context *)request)->callback = env->NewGlobalRef(clbk);
+        ((struct jucx_context *)request)->rkey_p = rkey_p;
+    } else {
+        struct jucx_context ctx;
+        ctx.callback = env->NewGlobalRef(clbk);
+        ctx.rkey_p = rkey_p;
+        if (UCS_PTR_IS_ERR(request)) {
+            JNU_ThrowExceptionByStatus(env, UCS_PTR_STATUS(request));
+            send_callback(&ctx, UCS_PTR_STATUS(request));
+        } else if(UCS_PTR_STATUS(request) == UCS_OK) {
+            send_callback(&ctx, UCS_OK);
+        }
+    }
+}

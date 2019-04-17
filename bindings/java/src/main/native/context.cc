@@ -47,6 +47,9 @@ Java_org_ucx_jucx_ucp_UcpContext_createContextNative(JNIEnv *env, jclass cls,
                                                          field);
     }
 
+    ucp_params.request_size = sizeof(struct jucx_context);
+    ucp_params.request_init = jucx_request_init;
+
     ucs_status_t status = ucp_init(&ucp_params, NULL, &ucp_context);
     if (status != UCS_OK) {
         JNU_ThrowExceptionByStatus(env, status);
@@ -93,6 +96,10 @@ Java_org_ucx_jucx_ucp_UcpContext_registerMemoryNative(JNIEnv *env, jobject ctx,
     jobject data_buf = env->NewDirectByteBuffer(memh->address, memh->length);
     field = env->GetFieldID(jucx_mem_cls, "data", "Ljava/nio/ByteBuffer;");
     env->SetObjectField(jucx_mem, field, data_buf);
+
+    // Set address
+    field =  env->GetFieldID(jucx_mem_cls, "address", "J");
+    env->SetLongField(jucx_mem, field, (native_ptr)memh->address);
 
     return jucx_mem;
 }

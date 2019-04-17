@@ -5,14 +5,20 @@
 
 #include "jucx_common_def.h"
 extern "C" {
+  #include <ucs/debug/assert.h>
   #include <ucs/debug/debug.h>
 }
 
 #include <string.h>    /* memset */
 #include <arpa/inet.h> /* inet_addr */
+#include <pthread.h>   /* pthread_yield */
 
 
-extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void* reserved) {
+static JavaVM *jvm_global;
+
+extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void* reserved)
+{
+   jvm_global = jvm;
    ucs_debug_disable_signals();
    return JNI_VERSION_1_1;
 }
@@ -118,4 +124,58 @@ bool j2cInetSockAddr(JNIEnv *env, jobject sock_addr, sockaddr_storage& ss,  sock
     }
     JNU_ThrowException(env, "Unknown InetAddress family");
     return false;
+}
+
+void jucx_request_init(void *request)
+{
+     struct jucx_context *ctx = (struct jucx_context *)request;
+     ctx->callback = NULL;
+     ctx->rkey_p = NULL;
+}
+
+static inline JNIEnv* get_jni_env()
+{
+    void *env;
+    jint rs = jvm_global->AttachCurrentThread(&env, NULL);
+    ucs_assert(rs == JNI_OK);
+    return (JNIEnv*)env;
+}
+
+static inline void call_on_success(jobject callback)
+{
+    JNIEnv *env = get_jni_env();
+    jclass callback_cls = env->GetObjectClass(callback);
+    jmethodID on_success = env->GetMethodID(callback_cls, "onSuccess", "()V");
+    env->CallVoidMethod(callback, on_success);
+}
+
+static inline void call_on_error(jobject callback, ucs_status_t status)
+{
+    JNIEnv *env = get_jni_env();
+    jclass callback_cls = env->GetObjectClass(callback);
+    jmethodID on_error = env->GetMethodID(callback_cls, "onError", "(I,Ljava/lang/String;)V");
+    env->CallVoidMethod(callback, on_error, status, ucs_status_string(status));
+}
+
+void send_callback(void *request, ucs_status_t status)
+{
+    struct jucx_context *ctx = (struct jucx_context *)request;
+    while(ctx->callback == NULL) {
+        pthread_yield();
+    }
+    if (status == UCS_OK) {
+        call_on_success(ctx->callback);
+    } else {
+        call_on_error(ctx->callback, status);
+    }
+
+    if (ctx->rkey_p != NULL) {
+        ucp_rkey_destroy(ctx->rkey_p);
+        ctx->rkey_p = NULL;
+    }
+
+    JNIEnv *env = get_jni_env();
+    env->DeleteGlobalRef(ctx->callback);
+    ctx->callback = NULL;
+    ucp_request_free(request);
 }

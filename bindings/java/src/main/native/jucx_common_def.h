@@ -36,4 +36,13 @@ void JNU_ThrowExceptionByStatus(JNIEnv *, ucs_status_t);
  */
 bool j2cInetSockAddr(JNIEnv *env, jobject sock_addr, sockaddr_storage& ss, socklen_t& sa_len);
 
+struct jucx_context {
+    jobject callback;
+    ucp_rkey_h rkey_p;
+};
+
+void jucx_request_init(void *request);
+
+void send_callback(void *request, ucs_status_t status);
+
 #endif

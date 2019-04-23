@@ -5,6 +5,7 @@
 
 package org.ucx.jucx.ucp;
 
+import org.ucx.jucx.UcxCallback;
 import org.ucx.jucx.UcxException;
 import org.ucx.jucx.UcxParams;
 
@@ -23,9 +24,9 @@ public class UcpEndpointParams extends UcxParams {
         super.clear();
         ucpAddress = null;
         errorHandlingMode = 0;
-        userData = null;
         flags = 0;
         socketAddress = null;
+        errorHandler = null;
         return this;
     }
 
@@ -33,7 +34,7 @@ public class UcpEndpointParams extends UcxParams {
 
     private int errorHandlingMode;
 
-    private ByteBuffer userData;
+    private UcxCallback errorHandler;
 
     private long flags;
 
@@ -60,18 +61,6 @@ public class UcpEndpointParams extends UcxParams {
     }
 
     /**
-     * User data associated with an endpoint.
-     */
-    public UcpEndpointParams setUserData(ByteBuffer userData) {
-        if (!userData.isDirect()) {
-            throw new UcxException("User data must be of type DirectByteBuffer.");
-        }
-        this.fieldMask |= UCP_EP_PARAM_FIELD_USER_DATA;
-        this.userData = userData;
-        return this;
-    }
-
-    /**
      * Destination address in form of InetSocketAddress.
      */
     public UcpEndpointParams setSocketAddress(InetSocketAddress socketAddress) {
@@ -90,5 +79,19 @@ public class UcpEndpointParams extends UcxParams {
         this.fieldMask |= UCP_EP_PARAM_FIELD_FLAGS;
         this.flags |= UCP_EP_PARAMS_FLAGS_NO_LOOPBACK;
         return this;
+    }
+
+    /**
+     * Handler to process transport level failure. Must redefine
+     * {@link UcxCallback#onError(int, String)} method.
+     */
+    public UcpEndpointParams setErrorHandler(UcxCallback errorHandler) {
+        this.fieldMask |= UCP_EP_PARAM_FIELD_ERR_HANDLER;
+        this.errorHandler = errorHandler;
+        return this;
+    }
+
+    public UcxCallback getErrorHandler() {
+        return errorHandler;
     }
 }

@@ -9,6 +9,16 @@
 #include <string.h>    /* memset */
 
 
+static void error_handler(void *arg, ucp_ep_h ep, ucs_status_t status)
+{
+    jobject *callback = (jobject *)arg;
+    JNIEnv *env = get_jni_env();
+    jclass callback_cls = env->GetObjectClass(*callback);
+    jmethodID on_error = env->GetMethodID(callback_cls, "onError", "(I,Ljava/lang/String;)V");
+    env->CallVoidMethod(callback, on_error, status, ucs_status_string(status));
+    env->DeleteGlobalRef(*callback);
+}
+
 JNIEXPORT jlong JNICALL
 Java_org_ucx_jucx_ucp_UcpEndpoint_createEndpointNative(JNIEnv *env, jclass cls,
                                                        jobject ucp_ep_params,
@@ -35,10 +45,11 @@ Java_org_ucx_jucx_ucp_UcpEndpoint_createEndpointNative(JNIEnv *env, jclass cls,
         ep_params.err_mode =  static_cast<ucp_err_handling_mode_t>(env->GetIntField(ucp_ep_params, field));
     }
 
-    if (ep_params.field_mask & UCP_EP_PARAM_FIELD_USER_DATA) {
-        field = env->GetFieldID(ucp_ep_params_class, "userData", "Ljava/nio/ByteBuffer;");
-        jobject user_data = env->GetObjectField(ucp_ep_params, field);
-        ep_params.user_data = env->GetDirectBufferAddress(user_data);
+    if (ep_params.field_mask & UCP_EP_PARAM_FIELD_ERR_HANDLER) {
+        field = env->GetFieldID(ucp_ep_params_class, "errorHandler", "Lorg/ucx/jucx/UcxCallback;");
+        jobject callback = env->GetObjectField(ucp_ep_params, field);
+        ep_params.err_handler.cb = error_handler;
+        ep_params.err_handler.arg = env->NewGlobalRef(callback);
     }
 
     if (ep_params.field_mask & UCP_EP_PARAM_FIELD_FLAGS) {
@@ -73,5 +84,6 @@ JNIEXPORT void JNICALL
 Java_org_ucx_jucx_ucp_UcpEndpoint_destroyEndpointNative(JNIEnv *env, jclass cls,
                                                         jlong ep_ptr)
 {
+    env->DeleteGlobalRef(*(jobject *)ucp_ep_ext_gen((ucp_ep_h) ep_ptr)->err_handler.arg);
     ucp_ep_destroy((ucp_ep_h) ep_ptr);
 }

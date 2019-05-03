@@ -48,4 +48,8 @@ JNIEnv* get_jni_env();
 
 void send_callback(void *request, ucs_status_t status);
 
+void recv_callback(void *request, ucs_status_t status, ucp_tag_recv_info_t *info);
+
+void process_request(void *request, jobject callback);
+
 #endif

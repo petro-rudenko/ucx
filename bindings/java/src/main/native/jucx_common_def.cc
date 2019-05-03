@@ -152,6 +152,22 @@ static inline void call_on_error(jobject callback, ucs_status_t status)
     env->CallVoidMethod(callback, on_error, status, error_msg);
 }
 
+void process_request(void *request, jobject callback)
+{
+    JNIEnv *env = get_jni_env();
+    // If request is a pointer set context callback and rkey.
+    if (UCS_PTR_IS_PTR(request)) {
+        ((struct jucx_context *)request)->callback = env->NewGlobalRef(callback);
+    } else {
+        if (UCS_PTR_IS_ERR(request)) {
+            JNU_ThrowExceptionByStatus(env, UCS_PTR_STATUS(request));
+            call_on_error(callback, UCS_PTR_STATUS(request));
+        } else if(UCS_PTR_STATUS(request) == UCS_OK) {
+            call_on_success(callback);
+        }
+    }
+}
+
 void send_callback(void *request, ucs_status_t status)
 {
     struct jucx_context *ctx = (struct jucx_context *)request;
@@ -168,4 +184,8 @@ void send_callback(void *request, ucs_status_t status)
     env->DeleteGlobalRef(ctx->callback);
     ctx->callback = NULL;
     ucp_request_free(request);
+}
+
+void recv_callback(void *request, ucs_status_t status, ucp_tag_recv_info_t *info){
+    send_callback(request, status);
 }

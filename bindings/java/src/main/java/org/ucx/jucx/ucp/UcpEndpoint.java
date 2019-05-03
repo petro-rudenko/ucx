@@ -48,6 +48,14 @@ public class UcpEndpoint extends UcxNativeStruct implements Closeable {
             dst, callback);
     }
 
+    public void sendNonBlocking(ByteBuffer data, long tag, UcxCallback callback) {
+        sendNonBlockingNative(getNativeId(), data, tag, callback);
+    }
+
+    public void sendNonBlocking(ByteBuffer data, UcxCallback callback) {
+        sendNonBlocking(data, 0, callback);
+    }
+
     private static native long createEndpointNative(UcpEndpointParams params, long workerId);
 
     private static native void destroyEndpointNative(long epId);
@@ -59,4 +67,9 @@ public class UcpEndpoint extends UcxNativeStruct implements Closeable {
                                                     long ucpRkeyId,
                                                     ByteBuffer localData,
                                                     UcxCallback callback);
+
+    private static native void sendNonBlockingNative(long enpointId,
+                                                     ByteBuffer data,
+                                                     long tag,
+                                                     UcxCallback callback);
 }

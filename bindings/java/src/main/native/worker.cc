@@ -108,3 +108,18 @@ Java_org_ucx_jucx_ucp_UcpWorker_progressWorkerNative(JNIEnv *env, jclass cls, jl
 {
     return ucp_worker_progress((ucp_worker_h)ucp_worker_ptr);
 }
+
+JNIEXPORT void JNICALL
+Java_org_ucx_jucx_ucp_UcpWorker_recvNonBlockingNative(JNIEnv *env, jclass cls,
+                                                      jlong ucp_worker_ptr,
+                                                      jobject recv_buf,
+                                                      jlong tag, jobject callback)
+{
+    ucs_status_ptr_t request = ucp_tag_recv_nb((ucp_worker_h) ucp_worker_ptr,
+                                                env->GetDirectBufferAddress(recv_buf),
+                                                env->GetDirectBufferCapacity(recv_buf),
+                                                ucp_dt_make_contig(1), tag, 0,
+                                                recv_callback);
+
+    process_request(request, callback);
+}

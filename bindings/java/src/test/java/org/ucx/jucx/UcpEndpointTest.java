@@ -137,4 +137,67 @@ public class UcpEndpointTest {
         context1.close();
         context2.close();
     }
+
+    @Test
+    public void testSendRecv() {
+        // Crerate 2 contexts + 2 workers and register
+        UcpContext context1 = new UcpContext(new UcpParams().requestRmaFeature().requestTagFeature());
+        UcpContext context2 = new UcpContext(new UcpParams().requestRmaFeature().requestTagFeature());
+        UcpWorker worker1 = new UcpWorker(context1, new UcpWorkerParams().requestWakeupRMA());
+        UcpWorker worker2 = new UcpWorker(context2, new UcpWorkerParams().requestWakeupRMA());
+
+        ByteBuffer src = ByteBuffer.allocateDirect(UcpMemoryTest.MEM_SIZE);
+        ByteBuffer dst = ByteBuffer.allocateDirect(UcpMemoryTest.MEM_SIZE);
+
+        AtomicBoolean received = new AtomicBoolean(false);
+        AtomicBoolean sent = new AtomicBoolean(false);
+        worker2.recvNonBlocking(dst, new UcxCallback() {
+            @Override
+            public void onSuccess() {
+                received.set(true);
+            }
+
+            @Override
+            public void onError(int ucsStatus, String errorMsg) {
+                received.set(true);
+                throw new UcxException(errorMsg);
+            }
+        });
+
+        src.asCharBuffer().put(UcpMemoryTest.RANDOM_TEXT);
+
+        // Create endpoint worker1 -> worker2
+        UcpEndpointParams epParams = new UcpEndpointParams().setPeerErrorHadnlingMode()
+            .setUcpAddress(worker2.getAddress());
+        UcpEndpoint endpoint = new UcpEndpoint(worker1, epParams);
+
+        endpoint.sendNonBlocking(src, new UcxCallback() {
+            @Override
+            public void onSuccess() {
+                sent.set(true);
+            }
+
+            @Override
+            public void onError(int ucsStatus, String errorMsg) {
+                sent.set(true);
+                throw new UcxException(errorMsg);
+            }
+        });
+
+        while (!sent.get()) {
+            worker1.progress();
+        }
+
+        while (!received.get()) {
+            worker2.progress();
+        }
+
+        assertEquals(dst.asCharBuffer().toString().trim(), UcpMemoryTest.RANDOM_TEXT);
+        endpoint.close();
+        worker1.close();
+        worker2.close();
+        context1.close();
+        context2.close();
+
+    }
 }

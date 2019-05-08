@@ -135,4 +135,87 @@ public class UcpEndpointTest {
         context1.close();
         context2.close();
     }
+
+    @Test
+    public void testPutNB() {
+        // Crerate 2 contexts + 2 workers
+        UcpParams params = new UcpParams().requestRmaFeature();
+        UcpWorkerParams rdmaWorkerParams = new UcpWorkerParams().requestWakeupRMA();
+        UcpContext context1 = new UcpContext(params);
+        UcpContext context2 = new UcpContext(params);
+        UcpWorker worker1 = context1.newWorker(rdmaWorkerParams);
+        UcpWorker worker2 = context2.newWorker(rdmaWorkerParams);
+
+        // Create endpoint worker1 -> worker2
+        UcpEndpointParams epParams = new UcpEndpointParams().setPeerErrorHadnlingMode()
+            .setUcpAddress(worker2.getAddress());
+        UcpEndpoint endpoint = worker1.newEndpoint(epParams);
+
+        ByteBuffer src = ByteBuffer.allocateDirect(UcpMemoryTest.MEM_SIZE);
+        src.asCharBuffer().put(UcpMemoryTest.RANDOM_TEXT);
+
+        ByteBuffer dst = ByteBuffer.allocateDirect(UcpMemoryTest.MEM_SIZE);
+        UcpMemory memory = context2.registerMemory(dst);
+
+        UcpRemoteKey rkey = endpoint.unpackRemoteKey(memory.getRemoteKeyBuffer());
+        UcxRequest request = endpoint.putNonBlocking(src, memory.getAddress(), rkey,
+            new UcxCallback() {
+                @Override
+                public void onSuccess() {
+                    rkey.close();
+                }
+            });
+
+        while (!request.isCompleted()) {
+            worker1.progress();
+        }
+
+        assertEquals(UcpMemoryTest.RANDOM_TEXT, dst.asCharBuffer().toString().trim());
+        memory.deregister();
+        endpoint.close();
+        worker1.close();
+        worker2.close();
+        context1.close();
+        context2.close();
+    }
+
+    @Test
+    public void testSendRecv() {
+        // Crerate 2 contexts + 2 workers
+        UcpParams params = new UcpParams().requestRmaFeature().requestTagFeature();
+        UcpWorkerParams rdmaWorkerParams = new UcpWorkerParams().requestWakeupRMA();
+        UcpContext context1 = new UcpContext(params);
+        UcpContext context2 = new UcpContext(params);
+        UcpWorker worker1 = context1.newWorker(rdmaWorkerParams);
+        UcpWorker worker2 = context2.newWorker(rdmaWorkerParams);
+
+        ByteBuffer src = ByteBuffer.allocateDirect(UcpMemoryTest.MEM_SIZE);
+        ByteBuffer dst = ByteBuffer.allocateDirect(UcpMemoryTest.MEM_SIZE);
+
+        UcxRequest received = worker2.recvNonBlocking(dst, null);
+
+        // Create endpoint worker1 -> worker2
+        UcpEndpointParams epParams = new UcpEndpointParams().setPeerErrorHadnlingMode()
+            .setUcpAddress(worker2.getAddress());
+        UcpEndpoint endpoint = worker1.newEndpoint(epParams);
+
+        src.asCharBuffer().put(UcpMemoryTest.RANDOM_TEXT);
+
+        UcxRequest sent = endpoint.sendNonBlocking(src, null);
+
+        while (!sent.isCompleted()) {
+            worker1.progress();
+        }
+
+        while (!received.isCompleted()) {
+            worker2.progress();
+        }
+
+        assertEquals(UcpMemoryTest.RANDOM_TEXT, dst.asCharBuffer().toString().trim());
+        endpoint.close();
+        worker1.close();
+        worker2.close();
+        context1.close();
+        context2.close();
+    }
 }

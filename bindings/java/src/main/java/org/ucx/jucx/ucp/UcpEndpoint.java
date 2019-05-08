@@ -58,6 +58,32 @@ public class UcpEndpoint extends UcxNativeStruct implements Closeable {
             dst, callback);
     }
 
+    public UcxRequest sendNonBlocking(ByteBuffer data, long tag, UcxCallback callback) {
+        if (callback == null) {
+            callback = new UcxCallback();
+        }
+        return sendNonBlockingNative(getNativeId(), data, tag, callback);
+    }
+
+    public UcxRequest sendNonBlocking(ByteBuffer data, UcxCallback callback) {
+        return sendNonBlocking(data, 0, callback);
+    }
+
+    public UcxRequest putNonBlocking(ByteBuffer data, long remoteAddress, UcpRemoteKey remoteKey,
+                                     UcxCallback callback) {
+        if (!data.isDirect()) {
+            throw new UcxException("Data buffer must be direct.");
+        }
+        if (remoteKey.getNativeId() == null) {
+            throw new UcxException("Remote key is null.");
+        }
+        if (callback == null) {
+            callback = new UcxCallback();
+        }
+        return putNonBlockingNative(getNativeId(), data, remoteAddress,
+            remoteKey.getNativeId(), callback);
+    }
+
     private static native long createEndpointNative(UcpEndpointParams params, long workerId);
 
     private static native void destroyEndpointNative(long epId);
@@ -68,5 +94,13 @@ public class UcpEndpoint extends UcxNativeStruct implements Closeable {
                                                           long remoteAddress,
                                                           long ucpRkeyId,
                                                           ByteBuffer localData,
+                                                          UcxCallback callback);
+
+    private static native UcxRequest sendNonBlockingNative(long enpointId, ByteBuffer data,
+                                                           long tag,
+                                                           UcxCallback callback);
+
+    private static native UcxRequest putNonBlockingNative(long enpointId, ByteBuffer data,
+                                                          long remoteAddr, long ucpRkeyId,
                                                           UcxCallback callback);
 }

@@ -150,7 +150,7 @@ static inline void call_on_success(jobject callback)
     env->CallVoidMethod(callback, on_success);
 }
 
- static inline void call_on_error(jobject callback, ucs_status_t status)
+static inline void call_on_error(jobject callback, ucs_status_t status)
 {
     ucs_error("JUCX: send request error: %s", ucs_status_string(status));
     JNIEnv *env = get_jni_env();
@@ -160,7 +160,7 @@ static inline void call_on_success(jobject callback)
     env->CallVoidMethod(callback, on_error, status, error_msg);
 }
 
- void send_callback(void *request, ucs_status_t status)
+void send_callback(void *request, ucs_status_t status)
 {
     struct jucx_context *ctx = (struct jucx_context *)request;
     while(ctx->callback == NULL) {
@@ -179,6 +179,10 @@ static inline void call_on_success(jobject callback)
     ctx->callback = NULL;
     ctx->jucx_request = NULL;
     ucp_request_free(request);
+}
+
+void recv_callback(void *request, ucs_status_t status, ucp_tag_recv_info_t *info){
+    send_callback(request, status);
 }
 
 jobject process_request(void *request, jobject callback)

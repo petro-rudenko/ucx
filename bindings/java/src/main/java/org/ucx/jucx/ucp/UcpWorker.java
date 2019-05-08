@@ -8,7 +8,10 @@ package org.ucx.jucx.ucp;
 import java.io.Closeable;
 import java.nio.ByteBuffer;
 
+import org.ucx.jucx.UcxCallback;
+import org.ucx.jucx.UcxException;
 import org.ucx.jucx.UcxNativeStruct;
+import org.ucx.jucx.UcxRequest;
 
 /**
  * UCP worker is an opaque object representing the communication context.  The
@@ -81,6 +84,21 @@ public class UcpWorker extends UcxNativeStruct implements Closeable {
         return result;
     }
 
+    public UcxRequest recvNonBlocking(ByteBuffer recvBuffer, long tag,
+                                UcxCallback callback) {
+        if (!recvBuffer.isDirect()) {
+            throw new UcxException("Recv buffer must be direct.");
+        }
+        if (callback == null) {
+            callback = new UcxCallback();
+        }
+        return recvNonBlockingNative(getNativeId(), recvBuffer, tag, callback);
+    }
+
+    public UcxRequest recvNonBlocking(ByteBuffer recvBuffer, UcxCallback callback) {
+        return recvNonBlocking(recvBuffer, 0, callback);
+    }
+
     private static native long createWorkerNative(UcpWorkerParams params, long ucpContextId);
 
     private static native void releaseWorkerNative(long workerId);
@@ -90,4 +108,7 @@ public class UcpWorker extends UcxNativeStruct implements Closeable {
     private static native void releaseAddressNative(long workerId, ByteBuffer addressId);
 
     private static native int progressWorkerNative(long workerId);
+
+    private static native UcxRequest recvNonBlockingNative(long workerId, ByteBuffer recvBuffer,
+                                                           long tag, UcxCallback callback);
 }

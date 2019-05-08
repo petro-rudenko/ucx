@@ -52,6 +52,8 @@ JNIEnv* get_jni_env();
  */
 void send_callback(void *request, ucs_status_t status);
 
+void recv_callback(void *request, ucs_status_t status, ucp_tag_recv_info_t *info);
+
 /**
  * @brief Utility to process request logic: if request is pointer - set callback to request context.
  * If request is status - call callback directly.

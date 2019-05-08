@@ -120,3 +120,28 @@ Java_org_ucx_jucx_ucp_UcpEndpoint_getNonBlockingNative(JNIEnv *env, jclass cls,
 
     return process_request(request, callback);
 }
+
+JNIEXPORT jobject JNICALL
+Java_org_ucx_jucx_ucp_UcpEndpoint_sendNonBlockingNative(JNIEnv *env, jclass cls,
+                                                        jlong ep_ptr, jobject send_buf,
+                                                        jlong tag, jobject callback)
+{
+    ucs_status_ptr_t request = ucp_tag_send_nb((ucp_ep_h)ep_ptr,
+                                               env->GetDirectBufferAddress(send_buf),
+                                               env->GetDirectBufferCapacity(send_buf),
+                                               ucp_dt_make_contig(1), tag, send_callback);
+    return process_request(request, callback);
+}
+
+JNIEXPORT jobject JNICALL
+Java_org_ucx_jucx_ucp_UcpEndpoint_putNonBlockingNative(JNIEnv *env, jclass cls,
+                                                       jlong ep_ptr, jobject data_buf,
+                                                       jlong remote_addr, jlong rkey_ptr,
+                                                       jobject callback)
+{
+    ucs_status_ptr_t request = ucp_put_nb((ucp_ep_h) ep_ptr,
+                                          env->GetDirectBufferAddress(data_buf),
+                                          env->GetDirectBufferCapacity(data_buf),
+                                          remote_addr, (ucp_rkey_h)rkey_ptr, send_callback);
+    return process_request(request, callback);
+}

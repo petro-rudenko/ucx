@@ -22,6 +22,8 @@ public class UcsConstants {
         public static int UCS_THREAD_MODE_MULTI;
     }
 
+    public static long UCS_PAGE_SIZE;
+
     private static void load() {
         NativeLibs.load();
         loadConstants();

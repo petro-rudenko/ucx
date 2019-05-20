@@ -105,7 +105,15 @@ public class UcpEndpointTest {
         AtomicInteger numCompletedRequests = new AtomicInteger(0);
         UcxCallback callback = new UcxCallback() {
             @Override
-            public void onSuccess() {
+            public void onSuccess(UcxRequest request) {
+                if (request.getData() == dst1) {
+                    assertEquals(UcpMemoryTest.RANDOM_TEXT, dst1.asCharBuffer().toString().trim());
+                    memory1.deregister();
+                } else {
+                    assertEquals(UcpMemoryTest.RANDOM_TEXT + UcpMemoryTest.RANDOM_TEXT,
+                        dst2.asCharBuffer().toString().trim());
+                    memory2.deregister();
+                }
                 numCompletedRequests.incrementAndGet();
             }
         };
@@ -120,13 +128,7 @@ public class UcpEndpointTest {
         }
 
         assertTrue(request1.isCompleted() && request2.isCompleted());
-        assertEquals(UcpMemoryTest.RANDOM_TEXT, dst1.asCharBuffer().toString().trim());
-        assertEquals(UcpMemoryTest.RANDOM_TEXT + UcpMemoryTest.RANDOM_TEXT,
-            dst2.asCharBuffer().toString().trim());
 
-
-        memory1.deregister();
-        memory2.deregister();
         rkey1.close();
         rkey2.close();
         endpoint.close();

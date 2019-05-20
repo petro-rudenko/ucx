@@ -142,12 +142,13 @@ static inline void set_jucx_request_completed(JNIEnv *env, jobject jucx_request)
     env->SetBooleanField(jucx_request, field, true);
 }
 
-static inline void call_on_success(jobject callback)
+static inline void call_on_success(jobject callback, jobject request)
 {
     JNIEnv *env = get_jni_env();
     jclass callback_cls = env->GetObjectClass(callback);
-    jmethodID on_success = env->GetMethodID(callback_cls, "onSuccess", "()V");
-    env->CallVoidMethod(callback, on_success);
+    jmethodID on_success = env->GetMethodID(callback_cls, "onSuccess",
+                           "(Lorg/ucxjucx/UcxRequest;)V");
+    env->CallVoidMethod(callback, on_success, request);
 }
 
 static inline void call_on_error(jobject callback, ucs_status_t status)
@@ -163,11 +164,11 @@ static inline void call_on_error(jobject callback, ucs_status_t status)
 void send_callback(void *request, ucs_status_t status)
 {
     struct jucx_context *ctx = (struct jucx_context *)request;
-    while(ctx->callback == NULL) {
+    while (ctx->callback == NULL || ctx->jucx_request == NULL) {
         pthread_yield();
     }
     if (status == UCS_OK) {
-        call_on_success(ctx->callback);
+        call_on_success(ctx->callback, ctx->jucx_request);
     } else {
         call_on_error(ctx->callback, status);
     }
@@ -181,12 +182,14 @@ void send_callback(void *request, ucs_status_t status)
     ucp_request_free(request);
 }
 
-jobject process_request(void *request, jobject callback)
+jobject process_request(void *request, jobject callback, jobject data_buf)
 {
     JNIEnv *env = get_jni_env();
     jclass jucx_request_cls = env->FindClass("org/ucx/jucx/UcxRequest");
     jmethodID constructor = env->GetMethodID(jucx_request_cls, "<init>", "()V");
     jobject jucx_request = env->NewObject(jucx_request_cls, constructor);
+    jfieldID field = env->GetFieldID(jucx_request_cls, "data", "Ljava/nio/ByteBuffer;");
+    env->SetObjectField(jucx_request, field, data_buf);
 
     // If request is a pointer set context callback and rkey.
     if (UCS_PTR_IS_PTR(request)) {
@@ -196,8 +199,8 @@ jobject process_request(void *request, jobject callback)
         if (UCS_PTR_IS_ERR(request)) {
             JNU_ThrowExceptionByStatus(env, UCS_PTR_STATUS(request));
             call_on_error(callback, UCS_PTR_STATUS(request));
-        } else if(UCS_PTR_STATUS(request) == UCS_OK) {
-            call_on_success(callback);
+        } else if (UCS_PTR_STATUS(request) == UCS_OK) {
+            call_on_success(callback, jucx_request);
         }
         set_jucx_request_completed(env, jucx_request);
     }

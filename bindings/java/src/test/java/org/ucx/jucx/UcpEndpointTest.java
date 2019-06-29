@@ -54,7 +54,8 @@ public class UcpEndpointTest {
                         UcpListener ucpListener = worker.newListener(
                             new UcpListenerParams().setSockAddr(addr));
                         UcpEndpointParams epParams =
-                            new UcpEndpointParams().setSocketAddress(addr);
+                            new UcpEndpointParams().setSocketAddress(addr)
+                                .setPeerErrorHadnlingMode();
                         UcpEndpoint endpoint = worker.newEndpoint(epParams);
                         assertNotNull(endpoint.getNativeId());
                         success = true;

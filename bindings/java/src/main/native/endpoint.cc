@@ -85,7 +85,7 @@ JNIEXPORT void JNICALL
 Java_org_ucx_jucx_ucp_UcpEndpoint_destroyEndpointNative(JNIEnv *env, jclass cls,
                                                         jlong ep_ptr)
 {
-    ucp_ep_destroy((ucp_ep_h) ep_ptr);
+    ucp_ep_close_nb((ucp_ep_h) ep_ptr, UCP_EP_CLOSE_MODE_FORCE);
 }
 
 JNIEXPORT jobject JNICALL

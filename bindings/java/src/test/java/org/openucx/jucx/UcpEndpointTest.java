@@ -35,44 +35,6 @@ public class UcpEndpointTest {
     }
 
     @Test
-    public void testConnectToListenerBySocketAddr() throws SocketException {
-        UcpContext context = new UcpContext(new UcpParams().requestStreamFeature());
-        UcpWorker worker = context.newWorker(new UcpWorkerParams());
-        // Iterate over each network interface - got it's sockaddr - try to instantiate listener
-        // And pass this sockaddr to endpoint.
-        Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-        boolean success = false;
-        while (!success && interfaces.hasMoreElements()) {
-            NetworkInterface networkInterface = interfaces.nextElement();
-            Enumeration<InetAddress> inetAddresses = networkInterface.getInetAddresses();
-            while (inetAddresses.hasMoreElements()) {
-                InetAddress inetAddress = inetAddresses.nextElement();
-                if (!inetAddress.isLoopbackAddress()) {
-                    try {
-                        InetSocketAddress addr = new InetSocketAddress(inetAddress,
-                            UcpListenerTest.port);
-                        UcpListener ucpListener = worker.newListener(
-                            new UcpListenerParams().setSockAddr(addr));
-                        UcpEndpointParams epParams =
-                            new UcpEndpointParams().setSocketAddress(addr);
-                        UcpEndpoint endpoint = worker.newEndpoint(epParams);
-                        assertNotNull(endpoint.getNativeId());
-                        success = true;
-                        endpoint.close();
-                        ucpListener.close();
-                        break;
-                    } catch (UcxException ex) {
-
-                    }
-                }
-            }
-        }
-
-        worker.close();
-        context.close();
-    }
-
-    @Test
     public void testGetNB() {
         // Crerate 2 contexts + 2 workers
         UcpParams params = new UcpParams().requestRmaFeature();

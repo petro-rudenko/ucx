@@ -299,10 +299,10 @@ Requires: %{name}%{?_isa} = %{version}-%{release}
 Summary: UCX Java bindings
 Group: System Environment/Libraries
 
-%description java
+%description ucx-java
 Provides java bindings for UCX.
 
-%files java
+%files ucx-java
 %{_libdir}/jucx-*.jar
 %endif
 

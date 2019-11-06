@@ -13,7 +13,7 @@
 %bcond_with    rocm
 %bcond_with    ugni
 %bcond_with    xpmem
-%bcond_with    java
+%bcond_without java
 
 Name: ucx
 Version: @VERSION@

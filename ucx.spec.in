@@ -294,15 +294,15 @@ process to map the memory of another process into its virtual address space.
 %endif
 
 %if %{with java}
-%package ucx-java
+%package java
 Requires: %{name}%{?_isa} = %{version}-%{release}
 Summary: UCX Java bindings
 Group: System Environment/Libraries
 
-%description ucx-java
+%description java
 Provides java bindings for UCX.
 
-%files ucx-java
+%files java
 %{_libdir}/jucx-*.jar
 %endif
 

@@ -92,5 +92,12 @@ public class UcpConstants {
     public static long UCP_EP_PARAMS_FLAGS_CLIENT_SERVER;
     public static long UCP_EP_PARAMS_FLAGS_NO_LOOPBACK;
 
+    /**
+     *  The enumeration list describes the memory mapping flags.
+     */
+    public static long UCP_MEM_MAP_NONBLOCK;
+    public static long UCP_MEM_MAP_ALLOCATE;
+    public static long UCP_MEM_MAP_FIXED;
+
     private static native void loadConstants();
 }

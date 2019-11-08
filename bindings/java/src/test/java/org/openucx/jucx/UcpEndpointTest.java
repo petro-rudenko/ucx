@@ -8,6 +8,7 @@ package org.openucx.jucx;
 import org.junit.Test;
 import org.openucx.jucx.ucp.*;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
@@ -189,7 +190,7 @@ public class UcpEndpointTest {
     }
 
     @Test
-    public void testSendRecv() {
+    public void testSendRecv() throws Exception {
         // Crerate 2 contexts + 2 workers
         UcpParams params = new UcpParams().requestRmaFeature().requestTagFeature();
         UcpWorkerParams rdmaWorkerParams = new UcpWorkerParams().requestWakeupRMA();
@@ -199,8 +200,12 @@ public class UcpEndpointTest {
         UcpWorker worker2 = context2.newWorker(rdmaWorkerParams);
 
         // Allocate 2 source and 2 destination buffers, to perform 2 RDMA Read operations
-        ByteBuffer src1 = ByteBuffer.allocateDirect(UcpMemoryTest.MEM_SIZE);
-        ByteBuffer src2 = ByteBuffer.allocateDirect(UcpMemoryTest.MEM_SIZE);
+        UcpRegisterMemoryParams allocationParams = new UcpRegisterMemoryParams().allocate()
+            .setLength(UcpMemoryTest.MEM_SIZE);
+        UcpMemory memory1 = context1.registerMemory(allocationParams);
+        UcpMemory memory2 = context1.registerMemory(allocationParams);
+        ByteBuffer src1 = UcxUtils.getByteBufferView(memory1.getAddress(), UcpMemoryTest.MEM_SIZE);
+        ByteBuffer src2 = UcxUtils.getByteBufferView(memory1.getAddress(), UcpMemoryTest.MEM_SIZE);
         ByteBuffer dst1 = ByteBuffer.allocateDirect(UcpMemoryTest.MEM_SIZE);
         ByteBuffer dst2 = ByteBuffer.allocateDirect(UcpMemoryTest.MEM_SIZE);
         src1.asCharBuffer().put(UcpMemoryTest.RANDOM_TEXT);
@@ -235,6 +240,8 @@ public class UcpEndpointTest {
         }
 
         ep.close();
+        memory1.deregister();
+        memory2.deregister();
         worker1.close();
         worker2.close();
         context1.close();

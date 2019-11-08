@@ -67,4 +67,9 @@ Java_org_openucx_jucx_ucp_UcpConstants_loadConstants(JNIEnv *env, jclass cls)
     // The enumeration list describes the endpoint's parameters flags.
     JUCX_DEFINE_LONG_CONSTANT(UCP_EP_PARAMS_FLAGS_CLIENT_SERVER);
     JUCX_DEFINE_LONG_CONSTANT(UCP_EP_PARAMS_FLAGS_NO_LOOPBACK);
+
+    // The enumeration list describes the memory mapping flags
+    JUCX_DEFINE_LONG_CONSTANT(UCP_MEM_MAP_NONBLOCK);
+    JUCX_DEFINE_LONG_CONSTANT(UCP_MEM_MAP_ALLOCATE);
+    JUCX_DEFINE_LONG_CONSTANT(UCP_MEM_MAP_FIXED);
 }

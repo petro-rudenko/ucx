@@ -11,7 +11,6 @@ import org.openucx.jucx.UcxUtils;
 import org.openucx.jucx.ucp.UcpEndpoint;
 import org.openucx.jucx.ucp.UcpEndpointParams;
 import org.openucx.jucx.ucp.UcpMemory;
-import org.openucx.jucx.ucp.UcpRegisterMemoryParams;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;

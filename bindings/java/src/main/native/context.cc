@@ -5,9 +5,9 @@
 
 #include "jucx_common_def.h"
 #include "org_openucx_jucx_ucp_UcpContext.h"
+#include <cuda_runtime.h>
 extern "C" {
 #include <ucp/core/ucp_mm.h>
-#include <cuda.h>
 }
 
 /**

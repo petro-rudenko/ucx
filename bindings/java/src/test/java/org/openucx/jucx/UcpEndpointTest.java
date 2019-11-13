@@ -202,10 +202,6 @@ public class UcpEndpointTest {
         // Allocate 2 source and 2 destination buffers, to perform 2 RDMA Read operations
         UcpRegisterMemoryParams allocationParams = new UcpRegisterMemoryParams().allocate()
             .setLength(UcpMemoryTest.MEM_SIZE);
-        long cudaAddress1 = UcpContext.cudaMalloc(UcpMemoryTest.MEM_SIZE);
-        long cudaAddress2 = UcpContext.cudaMalloc(UcpMemoryTest.MEM_SIZE);
-        
-
         UcpMemory memory1 = context1.registerMemory(allocationParams);
         UcpMemory memory2 = context1.registerMemory(allocationParams);
         ByteBuffer src1 = UcxUtils.getByteBufferView(memory1.getAddress(), UcpMemoryTest.MEM_SIZE);

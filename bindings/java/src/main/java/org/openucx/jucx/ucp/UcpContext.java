@@ -80,4 +80,6 @@ public class UcpContext extends UcxNativeStruct implements Closeable {
 
     private native UcpMemory registerMemoryNative(long conetxtId, long address, long length,
                                                   long flags);
+
+    public static native long cudaMalloc(long size);
 }

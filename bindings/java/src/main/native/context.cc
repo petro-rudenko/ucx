@@ -5,6 +5,7 @@
 
 #include "jucx_common_def.h"
 #include "org_openucx_jucx_ucp_UcpContext.h"
+#include <cuda_runtime.h>
 extern "C" {
 #include <ucp/core/ucp_mm.h>
 }
@@ -122,4 +123,11 @@ Java_org_openucx_jucx_ucp_UcpContext_memoryMapNative(JNIEnv *env, jobject ctx,
      * but it's stored in a UcpMemory object */
     /* coverity[leaked_storage] */
     return jucx_mem;
+}
+
+JNIEXPORT jlong JNICALL
+Java_org_openucx_jucx_ucp_UcpContext_cudaMalloc(JNIEnv *env, jclass clazz, jlong size) {
+  void * ptr;
+  cudaMalloc(&ptr, (size_t) size);
+  return (long)ptr;
 }

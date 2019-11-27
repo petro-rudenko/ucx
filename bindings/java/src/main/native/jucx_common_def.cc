@@ -17,8 +17,10 @@ extern "C" {
 
 static JavaVM *jvm_global;
 static jclass jucx_request_cls;
+static jclass jucx_conn_hndl_cls;
 static jfieldID native_id_field;
 static jmethodID on_success;
+static jmethodID on_conn_request;
 static jmethodID jucx_request_constructor;
 
 extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void* reserved) {
@@ -36,6 +38,8 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void* reserved) {
     on_success = env->GetMethodID(jucx_callback_cls, "onSuccess",
                                   "(Lorg/openucx/jucx/ucp/UcpRequest;)V");
     jucx_request_constructor = env->GetMethodID(jucx_request_cls, "<init>", "(J)V");
+    jucx_conn_hndl_cls = env->FindClass("org/openucx/jucx/ucp/UcpListenerConnectionHandler");
+    on_conn_request = env->GetMethodID(jucx_conn_hndl_cls, "onConnectionRequest", "(J)V");
     return JNI_VERSION_1_1;
 }
 
@@ -253,4 +257,14 @@ UCS_PROFILE_FUNC(jobject, process_request, (request, callback), void *request, j
         set_jucx_request_completed(env, jucx_request);
     }
     return jucx_request;
+}
+
+
+void jucx_connection_handler(ucp_conn_request_h conn_request, void *arg)
+{
+    jobject jucx_conn_handler = reinterpret_cast<jobject>(arg);
+
+    JNIEnv *env = get_jni_env();
+    env->CallVoidMethod(jucx_conn_handler, on_conn_request, (native_ptr)conn_request);
+    env->DeleteGlobalRef(jucx_conn_handler);
 }

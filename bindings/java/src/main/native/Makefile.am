@@ -8,7 +8,7 @@ if HAVE_JAVA
 jardir         = $(libdir)
 topdir         = $(abs_top_builddir)
 java_build_dir = $(builddir)/build-java
-jarfile        = $(java_build_dir)/jucx-@VERSION@.jar
+jarfile        = $(java_build_dir)/jucx-@VERSION@-SNAPSHOT.jar
 javadir        = $(top_srcdir)/bindings/java
 
 MVNCMD = $(MVN) -B -T 1C -f \
@@ -40,7 +40,7 @@ MOSTLYCLEANFILES = $(JUCX_GENERATED_H_FILES) $(STAMP_FILE)
 $(STAMP_FILE): \
 		$(javadir)/src/main/java/org/openucx/jucx/ucs/*.java \
 		$(javadir)/src/main/java/org/openucx/jucx/ucp/*.java
-	$(MVNCMD) compile native:javah
+	$(MVNCMD) compile
 	touch $(STAMP_FILE)
 
 $(JUCX_GENERATED_H_FILES): $(STAMP_FILE)
@@ -81,10 +81,13 @@ package : $(jarfile)
 
 # Maven install phase
 jar_DATA = $(jarfile)
-
 # Remove all compiled Java files
 clean-local:
 	-rm -rf $(java_build_dir)
+
+# Publish JUCX jar to maven central
+publish:
+	$(MVNCMD) deploy -DskipTests ${ARGS}
 
 test:
 	$(MVNCMD) test -DargLine="-XX:OnError='cat hs_err_pid%p.log'"

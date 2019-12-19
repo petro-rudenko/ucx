@@ -279,6 +279,7 @@ public class UcpEndpointTest extends UcxTest {
         worker2.recvTaggedNonBlocking(dst1, 0, -1, new UcxCallback() {
             @Override
             public void onSuccess(UcpRequest request) {
+                assertNull(request.getNativeId());
                 success.set(true);
             }
         });

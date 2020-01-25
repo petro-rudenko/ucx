@@ -144,7 +144,7 @@ static inline void jucx_context_reset(struct jucx_context* ctx)
     ctx->callback = NULL;
     ctx->jucx_request = NULL;
     ctx->status = UCS_INPROGRESS;
-    ctx->length = 0;
+    *(ctx->length) = 0;
 }
 
 void jucx_request_init(void *request)
@@ -167,7 +167,7 @@ static inline void set_jucx_request_completed(JNIEnv *env, jobject jucx_request,
 {
     env->SetObjectField(jucx_request, native_id_field, NULL);
     if ((ctx != NULL) && (ctx->length > 0)) {
-        env->SetLongField(jucx_request, recv_size_field, ctx->length);
+        env->SetLongField(jucx_request, recv_size_field, *(ctx->length));
     }
 }
 
@@ -227,14 +227,14 @@ UCS_PROFILE_FUNC_VOID(jucx_request_callback, (request, status), void *request, u
 void recv_callback(void *request, ucs_status_t status, ucp_tag_recv_info_t *info)
 {
     struct jucx_context *ctx = (struct jucx_context *)request;
-    ctx->length = info->length;
+    *(ctx->length) = info->length;
     jucx_request_callback(request, status);
 }
 
 void stream_recv_callback(void *request, ucs_status_t status, size_t length)
 {
     struct jucx_context *ctx = (struct jucx_context *)request;
-    ctx->length = length;
+    *(ctx->length) = length;
     jucx_request_callback(request, status);
 }
 

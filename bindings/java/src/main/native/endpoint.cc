@@ -207,15 +207,33 @@ Java_org_openucx_jucx_ucp_UcpEndpoint_sendStreamNonBlockingNative(JNIEnv *env, j
 JNIEXPORT jobject JNICALL
 Java_org_openucx_jucx_ucp_UcpEndpoint_recvStreamNonBlockingNative(JNIEnv *env, jclass cls,
                                                                   jlong ep_ptr, jlong addr,
-                                                                  jlong size, jobject callback)
+                                                                  jlong size, jlong flags,
+                                                                  jobject callback)
 {
+
     size_t rlength;
     ucs_status_ptr_t request = ucp_stream_recv_nb((ucp_ep_h)ep_ptr, (void *)addr, size,
                                                   ucp_dt_make_contig(1), stream_recv_callback,
-                                                  &rlength, UCP_STREAM_RECV_FLAG_WAITALL);
+                                                  &rlength, flags);
 
     ucs_trace_req("JUCX: recv_stream_nb request %p to %s, size: %zu",
                   request, ucp_ep_peer_name((ucp_ep_h)ep_ptr), size);
+
+    if (UCS_PTR_IS_PTR(request)) {
+        // If it'
+        struct jucx_context *ctx = (struct jucx_context *)request;
+        ctx->length = &rlength;
+    } else if (request == NULL) {
+        void *ctx = ucs_malloc(sizeof(struct jucx_context));
+        ctx->callback = NULL;
+        ctx->jucx_request = NULL;
+        ctx->status = UCS_OK;
+        ctx->length = &rlength;
+        jobject result = process_request(ctx, callback);
+        ucs_free(ctx);
+        return result;
+    }
+
     return process_request(request, callback);
 }
 

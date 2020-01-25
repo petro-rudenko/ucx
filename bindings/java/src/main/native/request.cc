@@ -21,3 +21,10 @@ Java_org_openucx_jucx_ucp_UcpRequest_closeRequestNative(JNIEnv *env, jclass cls,
 {
     ucp_request_free((void *)ucp_req_ptr);
 }
+
+JNIEXPORT jlong JNICALL
+Java_org_openucx_jucx_ucp_UcpRequest_recvSizeNative(JNIEnv *env, jclass cls,
+                                                    jlong ucp_req_ptr)
+{
+    return *(((struct jucx_context *)ucp_req_ptr)->length);
+}

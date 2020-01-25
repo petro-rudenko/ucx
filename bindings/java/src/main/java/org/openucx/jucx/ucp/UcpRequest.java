@@ -28,7 +28,7 @@ public class UcpRequest extends UcxNativeStruct implements Closeable {
      * {@link UcpWorker#recvTaggedNonBlocking(ByteBuffer buffer, UcxCallback clb)}
      */
     public long getRecvSize() {
-        return recvSize;
+        return isCompleted() ? recvSize : recvSizeNative(getNativeId());
     }
 
     /**
@@ -54,4 +54,6 @@ public class UcpRequest extends UcxNativeStruct implements Closeable {
     private static native boolean isCompletedNative(long ucpRequest);
 
     private static native void closeRequestNative(long ucpRequest);
+
+    private static native long recvSizeNative(long ucpRequest);
 }

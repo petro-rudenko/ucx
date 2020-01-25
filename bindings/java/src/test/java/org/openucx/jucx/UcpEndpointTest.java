@@ -197,7 +197,7 @@ public class UcpEndpointTest extends UcxTest {
     }
 
     @Test
-    public void testRecvAfterSend() {
+    public void testRecvAfterSend() throws InterruptedException {
         // Crerate 2 contexts + 2 workers
         UcpParams params = new UcpParams().requestRmaFeature().requestTagFeature()
             .setMtWorkersShared(true);
@@ -230,9 +230,7 @@ public class UcpEndpointTest extends UcxTest {
         progressThread.setDaemon(true);
         progressThread.start();
 
-        try {
-            Thread.sleep(5);
-        } catch (InterruptedException ignored) { }
+        Thread.sleep(5);
 
         AtomicBoolean success = new AtomicBoolean(false);
 

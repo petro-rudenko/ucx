@@ -56,7 +56,7 @@ struct jucx_context {
     volatile jobject jucx_request;
     ucs_status_t status;
     ucs_spinlock_t lock;
-    size_t length;
+    size_t *length;
 };
 
 void jucx_request_init(void *request);
@@ -93,6 +93,6 @@ void jucx_connection_handler(ucp_conn_request_h conn_request, void *arg);
 /**
  * @brief Creates new jucx rkey class.
  */
-jobject new_rkey_instance(JNIEnv *env, ucp_rkey_h rkey);
+inline jobject new_rkey_instance(JNIEnv *env, ucp_rkey_h rkey);
 
 #endif

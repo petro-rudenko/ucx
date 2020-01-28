@@ -1,0 +1,28 @@
+parameters:
+  target: publish
+  temp_cfg: bindings/java/src/main/native/build-java/tmp-settings.xml
+
+steps:
+  - bash: ./autogen.sh
+    displayName: Setup autotools
+
+  - bash: |
+      set -eE
+      ./contrib/configure-release --with-java
+      make -s -j`nproc`
+    displayName: Configure
+
+  - bash: |
+      set -eE
+      {
+        echo -e "<settings><servers><server>"
+        echo -e "<id>ossrh</id><username>${SONATYPE_USERNAME}</username>"
+        echo -e "<password>${SONATYPE_PASSWORD}</password>"
+        echo -e "</server></servers></settings>"
+      } > ${{ parameters.temp_cfg }}
+    displayName: Generate temporary config
+
+  - bash: |
+      set -eE
+      make -C bindings/java/src/main/native/ ${{ parameters.target }} ARGS="--settings ${{ parameters.temp_cfg }}"
+    displayName: Publish

@@ -141,21 +141,9 @@ stages:
         displayName: Publish JUCX SNAPSHOT artifact to maven central
         container: fedora
         steps:
-          - bash: ./autogen.sh
-            displayName: Setup autotools
-
-          - bash: |
-              set -eE
-              gcc --version
-              ./contrib/configure-release --with-java
-              make -s -j `nproc`
-              tmp_settings=" bindings/java/src/main/native/build-java/tmp-settings.xml"
-              echo "<settings><servers><server>" > $tmp_settings
-              echo "<id>ossrh</id><username>${SONATYPE_USERNAME}</username>" >> $tmp_settings
-              echo "<password>${SONATYPE_PASSWORD}</password>" >> $tmp_settings
-              echo "</server></servers></settings>" >> $tmp_settings
-              make -C bindings/java/src/main/native/ publish ARGS="--settings $tmp_settings"
-            displayName: Make and publish JUCX jar
+          - template: jucx-publish.yml
+            parameters:
+              target: publish-snapshot
 
   - stage: Tests
     dependsOn: [Codestyle]

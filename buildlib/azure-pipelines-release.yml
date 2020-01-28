@@ -19,33 +19,9 @@ stages:
         displayName: build tarball and source rpm
         container: fedora
         steps:
-          - bash: ./autogen.sh
-            displayName: Setup autotools
-
-          - bash: |
-              sed -i -e 's/@VERSION@-SNAPSHOT/@VERSION@/g' bindings/java/pom.xml.in
-              sed -i -e 's/@VERSION@-SNAPSHOT/@VERSION@/g' bindings/java/src/main/native/Makefile.am
-            displayName: Set JUCX release version
-
-          - bash: |
-              set -eE
-              gcc --version
-              ./contrib/configure-release --with-java
-              ./contrib/buildrpm.sh -s -t -b
-            displayName: Build tarball
-
-          - bash: |
-              set -eE
-              gcc --version
-              ./contrib/configure-release-mt --with-java
-              make -j `nproc`
-              tmp_settings=" bindings/java/src/main/native/build-java/tmp-settings.xml"
-              echo "<settings><servers><server>" > $tmp_settings
-              echo "<id>ossrh</id><username>${SONATYPE_USERNAME}</username>" >> $tmp_settings
-              echo "<password>${SONATYPE_PASSWORD}</password>" >> $tmp_settings
-              echo "</server></servers></settings>" >> $tmp_settings
-              make -C bindings/java/src/main/native/ publish --settings $tmp_settings
-            displayName: Make and publish JUCX release jar
+          - template: jucx-publish.yml
+            parameters:
+              target: publish
 
           - task: GithubRelease@0
             displayName: Create/edit GitHub Draft Release

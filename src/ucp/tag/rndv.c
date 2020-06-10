@@ -210,6 +210,7 @@ ucs_status_t ucp_tag_send_start_rndv(ucp_request_t *sreq)
                   sreq->send.length);
     UCS_PROFILE_REQUEST_EVENT(sreq, "start_rndv", sreq->send.length);
 
+    sreq->timer = ucs_get_time();
     status = ucp_ep_resolve_dest_ep_ptr(ep, sreq->send.lane);
     if (status != UCS_OK) {
         return status;
@@ -231,6 +232,11 @@ static void ucp_rndv_complete_send(ucp_request_t *sreq, ucs_status_t status)
     ucp_request_send_generic_dt_finish(sreq);
     ucp_request_send_buffer_dereg(sreq);
     ucp_request_complete_send(sreq, status);
+
+    ucp_ep_h ep = sreq->send.ep;
+    ucp_trace_req(sreq, "end_rndv to %s buffer %p length %zu completed IN %f ms",
+                  ucp_ep_peer_name(ep), sreq->send.buffer,
+                  sreq->send.length, ucs_time_to_msec(ucs_get_time() - sreq->timer));
 }
 
 static void ucp_rndv_req_send_ats(ucp_request_t *rndv_req, ucp_request_t *rreq,
@@ -254,6 +260,10 @@ UCS_PROFILE_FUNC_VOID(ucp_rndv_complete_rma_put_zcopy, (sreq),
 {
     ucp_trace_req(sreq, "rndv_put completed");
     UCS_PROFILE_REQUEST_EVENT(sreq, "complete_rndv_put", 0);
+
+    ucp_trace_req(sreq, "end_rndv to %s buffer %p length %zu completed IN %f ms",
+                  ucp_ep_peer_name(sreq->send.ep), sreq->send.buffer,
+                  sreq->send.length, ucs_time_to_msec(ucs_get_time() - sreq->timer));
 
     ucp_request_send_buffer_dereg(sreq);
     ucp_request_complete_send(sreq, UCS_OK);
@@ -692,7 +702,7 @@ ucp_rndv_init_mem_type_frag_req(ucp_worker_h worker, ucp_request_t *freq, int rn
         mem_type_ep       = worker->mem_type_ep[mem_type];
         mem_type_rma_lane = ucp_ep_config(mem_type_ep)->key.rma_bw_lanes[0];
         md_index          = ucp_ep_md_index(mem_type_ep, mem_type_rma_lane);
-        ucs_assert(mem_type_rma_lane != UCP_NULL_LANE);
+        // ucs_assert(mem_type_rma_lane != UCP_NULL_LANE);
 
         freq->send.lane                       = mem_type_rma_lane;
         freq->send.ep                         = mem_type_ep;
@@ -1156,6 +1166,7 @@ ucs_status_t ucp_rndv_process_rts(void *arg, void *data, size_t length,
     ucs_status_t status;
 
     rreq = ucp_tag_exp_search(&worker->tm, rndv_rts_hdr->super.tag);
+    rreq->timer = ucs_get_time();
     if (rreq != NULL) {
         ucp_rndv_matched(worker, rreq, rndv_rts_hdr);
 
@@ -1247,6 +1258,7 @@ UCS_PROFILE_FUNC(ucs_status_t, ucp_rndv_progress_rma_put_zcopy, (self),
                  uct_pending_req_t *self)
 {
     ucp_request_t *sreq     = ucs_container_of(self, ucp_request_t, send.uct);
+
     const size_t max_iovcnt = 1;
     ucp_ep_h ep             = sreq->send.ep;
     ucs_status_t status;
@@ -1276,9 +1288,10 @@ UCS_PROFILE_FUNC(ucs_status_t, ucp_rndv_progress_rma_put_zcopy, (self),
                          ucp_ep_config(ep)->tag.rndv.max_put_zcopy);
     }
 
-    ucs_trace_data("req %p: offset %zu remainder %zu. read to %p len %zu",
+    ucs_trace_data("req %p: offset %zu remainder %zu. uct_ep_put_zcopy put to %p len %zu IN %f",
                    sreq, offset, (uintptr_t)sreq->send.buffer % align,
-                   UCS_PTR_BYTE_OFFSET(sreq->send.buffer, offset), length);
+                   UCS_PTR_BYTE_OFFSET(sreq->send.buffer, offset), length,
+                   (ucs_time_to_msec(ucs_get_time() - sreq->timer)));
 
     state = sreq->send.state.dt;
     ucp_dt_iov_copy_uct(ep->worker->context, iov, &iovcnt, max_iovcnt, &state,
@@ -1530,8 +1543,9 @@ UCS_PROFILE_FUNC(ucs_status_t, ucp_rndv_rtr_handler,
     ucs_status_t status;
     int is_pipeline_rndv;
 
-    ucp_trace_req(sreq, "received rtr address 0x%lx remote rreq 0x%lx",
-                  rndv_rtr_hdr->address, rndv_rtr_hdr->rreq_ptr);
+    ucp_trace_req(sreq, "received rtr address 0x%lx remote rreq 0x%lx IN %f",
+                  rndv_rtr_hdr->address, rndv_rtr_hdr->rreq_ptr,
+                  ucs_time_to_msec(ucs_get_time() - sreq->timer));
     UCS_PROFILE_REQUEST_EVENT(sreq, "rndv_rtr_recv", 0);
 
     if (sreq->flags & UCP_REQUEST_FLAG_OFFLOADED) {

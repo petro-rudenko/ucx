@@ -99,6 +99,7 @@ enum {
  * Request in progress.
  */
 struct ucp_request {
+    ucs_time_t                    timer;
     ucs_status_t                  status;     /* Operation status */
     uint32_t                      flags;      /* Request flags */
     void                          *user_data; /* Completion user data */

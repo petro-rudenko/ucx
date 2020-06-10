@@ -38,6 +38,10 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void* reserved) {
     jclass jucx_request_cls_local = env->FindClass("org/openucx/jucx/ucp/UcpRequest");
     jucx_request_cls = (jclass) env->NewGlobalRef(jucx_request_cls_local);
     jclass jucx_callback_cls = env->FindClass("org/openucx/jucx/UcxCallback");
+    if (jucx_callback_cls == NULL) {
+        ucs_error("Can't find org/openucx/jucx/UcxCallback class")
+        return JNI_ERR;
+    }
     native_id_field = env->GetFieldID(jucx_request_cls, "nativeId", "Ljava/lang/Long;");
     recv_size_field = env->GetFieldID(jucx_request_cls, "recvSize", "J");
     on_success = env->GetMethodID(jucx_callback_cls, "onSuccess",
@@ -45,6 +49,10 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void* reserved) {
     jucx_request_constructor = env->GetMethodID(jucx_request_cls, "<init>", "(J)V");
 
     jclass ucp_rkey_cls_local = env->FindClass("org/openucx/jucx/ucp/UcpRemoteKey");
+    if (ucp_rkey_cls_local == NULL) {
+        ucs_error("Can't find org/openucx/jucx/ucp/UcpRemoteKey")
+        return JNI_ERR;
+    }
     ucp_rkey_cls = (jclass) env->NewGlobalRef(ucp_rkey_cls_local);
     ucp_rkey_cls_constructor = env->GetMethodID(ucp_rkey_cls, "<init>", "(J)V");
     jclass ucp_tag_msg_cls_local = env->FindClass("org/openucx/jucx/ucp/UcpTagMessage");

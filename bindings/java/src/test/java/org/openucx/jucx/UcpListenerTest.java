@@ -7,10 +7,8 @@ package org.openucx.jucx;
 import org.junit.Test;
 import org.openucx.jucx.ucp.*;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
+import java.io.IOException;
+import java.net.*;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
@@ -150,5 +148,29 @@ public class UcpListenerTest  extends UcxTest {
         Collections.addAll(resources, context2, context1, clientWorker, serverWorker1,
             serverWorker2, listener, serverToClient, clientToServer);
         closeResources();
+    }
+
+    @Test
+    public void testSockAddrInUse() throws IOException {
+        UcpParams params = new UcpParams().setConfig("TCP_CM_ALLOW_ADDR_INUSE", "y")
+            .requestTagFeature();
+        UcpContext context = new UcpContext(params);
+
+        UcpWorker worker = context.newWorker(new UcpWorkerParams());
+        for (int i = 0; i < 100; i++) {
+            ServerSocket socket = new ServerSocket(0);
+            InetSocketAddress address =
+                new InetSocketAddress(socket.getInetAddress().getHostName(), socket.getLocalPort());
+            System.out.println("Setting listener on " + address);
+            UcpListener listener = worker.newListener(new UcpListenerParams().setSockAddr(address));
+
+            assertNotNull(listener.getNativeId());
+
+            listener.close();
+            socket.close();
+        }
+
+        worker.close();
+        context.close();
     }
 }

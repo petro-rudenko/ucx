@@ -42,14 +42,6 @@ public class UcxReadBWBenchmarkReceiver extends UcxBenchmark {
             .setConnectionRequest(connRequest.get())
             .setPeerErrorHandlingMode());
 
-        // Temporary workaround until new connection establishment protocol in UCX.
-        for (int i = 0; i < 10; i++) {
-            worker.progress();
-            try {
-                Thread.sleep(10);
-            } catch (Exception ignored) { }
-        }
-
         ByteBuffer recvBuffer = ByteBuffer.allocateDirect(4096);
         UcpRequest recvRequest = worker.recvTaggedNonBlocking(recvBuffer, null);
 

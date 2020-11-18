@@ -8,6 +8,7 @@ package org.openucx.jucx.examples;
 import org.openucx.jucx.UcxException;
 import org.openucx.jucx.ucp.*;
 import org.openucx.jucx.UcxUtils;
+import org.openucx.jucx.ucs.UcsConstants;
 
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
@@ -27,7 +28,7 @@ public class UcxReadBWBenchmarkSender extends UcxBenchmark {
         UcpEndpoint endpoint = worker.newEndpoint(new UcpEndpointParams()
             .setPeerErrorHandlingMode()
             .setErrorHandler((ep, status, errorMsg) -> {
-                if (status == -25) {
+                if (status == UcsConstants.STATUS.UCS_ERR_CONNECTION_RESET.value) {
                     throw new ConnectException(errorMsg);
                 } else {
                     throw new UcxException(errorMsg);
@@ -56,8 +57,10 @@ public class UcxReadBWBenchmarkSender extends UcxBenchmark {
         endpoint.sendTaggedNonBlocking(sendData, null);
 
         try {
-            while (worker.progress() == 0) {
-                worker.waitForEvents();
+            while (true) {
+                while (worker.progress() == 0) {
+                    worker.waitForEvents();
+                }
             }
         } catch (ConnectException ex) {
 

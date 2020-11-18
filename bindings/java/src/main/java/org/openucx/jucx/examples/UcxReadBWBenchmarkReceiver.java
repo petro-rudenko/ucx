@@ -95,12 +95,6 @@ public class UcxReadBWBenchmarkReceiver extends UcxBenchmark {
             data.put(0, (byte)1);
         }
 
-        ByteBuffer sendBuffer = ByteBuffer.allocateDirect(100);
-        sendBuffer.asCharBuffer().put("DONE");
-        
-        UcpRequest sent = endpoint.sendTaggedNonBlocking(sendBuffer, null);
-        worker.progressRequest(sent);
-
         UcpRequest closeRequest = endpoint.closeNonBlockingFlush();
         worker.progressRequest(closeRequest);
         // Close request won't be return to pull automatically, since there's no callback.

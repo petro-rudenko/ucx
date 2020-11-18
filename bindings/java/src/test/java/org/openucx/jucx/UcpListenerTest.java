@@ -86,7 +86,7 @@ public class UcpListenerTest  extends UcxTest {
     }
 
     @Test
-    public void testConnectionHandler() {
+    public void testConnectionHandler() throws Exception {
         UcpContext context1 = new UcpContext(new UcpParams().requestStreamFeature()
             .requestRmaFeature());
         UcpContext context2 = new UcpContext(new UcpParams().requestStreamFeature()

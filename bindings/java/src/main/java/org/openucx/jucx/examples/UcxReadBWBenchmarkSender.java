@@ -28,7 +28,7 @@ public class UcxReadBWBenchmarkSender extends UcxBenchmark {
         UcpEndpoint endpoint = worker.newEndpoint(new UcpEndpointParams()
             .setPeerErrorHandlingMode()
             .setErrorHandler((ep, status, errorMsg) -> {
-                if (status == UcsConstants.STATUS.UCS_ERR_CONNECTION_RESET.value) {
+                if (status == UcsConstants.STATUS.UCS_ERR_CONNECTION_RESET) {
                     throw new ConnectException(errorMsg);
                 } else {
                     throw new UcxException(errorMsg);
@@ -58,19 +58,17 @@ public class UcxReadBWBenchmarkSender extends UcxBenchmark {
 
         try {
             while (true) {
-                while (worker.progress() == 0) {
+                if (worker.progress() == 0) {
                     worker.waitForEvents();
                 }
             }
-        } catch (ConnectException ex) {
-
+        } catch (ConnectException ignored) {
         } catch (Exception ex) {
             System.err.println(ex.getMessage());
         } finally {
             UcpRequest closeRequest = endpoint.closeNonBlockingForce();
             worker.progressRequest(closeRequest);
             resources.push(closeRequest);
-
             closeResources();
         }
     }

@@ -252,3 +252,32 @@ UCS_PROFILE_FUNC(ucs_status_ptr_t, ucp_tag_msg_recv_nb,
     UCP_WORKER_THREAD_CS_EXIT_CONDITIONAL(worker);
     return ret;
 }
+
+UCS_PROFILE_FUNC(ucs_status_ptr_t, ucp_tag_msg_recv_nbx,
+                 (worker, buffer, count, message, param),
+                 ucp_worker_h worker, void *buffer, size_t count,
+                 ucp_tag_message_h message, const ucp_request_param_t *param)
+{
+    ucp_recv_desc_t *rdesc = message;
+    ucs_status_ptr_t ret;
+    ucp_request_t *req;
+    ucp_datatype_t datatype;
+
+    UCP_CONTEXT_CHECK_FEATURE_FLAGS(worker->context, UCP_FEATURE_TAG,
+                                    return UCS_STATUS_PTR(UCS_ERR_INVALID_PARAM));
+    UCP_WORKER_THREAD_CS_ENTER_CONDITIONAL(worker);
+
+    req = ucp_request_get_param(worker, param,
+                                {ret = UCS_STATUS_PTR(UCS_ERR_NO_MEMORY);
+                                goto out;});
+
+    datatype = ucp_request_param_datatype(param);
+
+    ret = ucp_tag_recv_common(worker, buffer, count, datatype,
+                              ucp_rdesc_get_tag(rdesc), UCP_TAG_MASK_FULL,
+                              req, rdesc, param, "msg_recv_nbx");
+
+out:
+    UCP_WORKER_THREAD_CS_EXIT_CONDITIONAL(worker);
+    return ret;
+}

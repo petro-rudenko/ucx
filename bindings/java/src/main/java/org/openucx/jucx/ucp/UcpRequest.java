@@ -7,6 +7,7 @@ package org.openucx.jucx.ucp;
 
 import org.openucx.jucx.UcxCallback;
 import org.openucx.jucx.UcxNativeStruct;
+import org.openucx.jucx.ucs.UcsConstants;
 
 import java.io.Closeable;
 import java.nio.ByteBuffer;
@@ -21,9 +22,17 @@ public class UcpRequest extends UcxNativeStruct implements Closeable {
 
     private long senderTag;
 
-    private UcpRequest(long nativeId) {
-        setNativeId(nativeId);
-    }
+    private long iovVector;
+
+    private UcxCallback callback;
+
+    /**
+     * The only request that doesn't have automatic status update (no callback)
+     * so need to go into ucx to check it's real status
+     */
+    private boolean isCloseRequest = false;
+
+    private int status = UcsConstants.STATUS.UCS_INPROGRESS;
 
     /**
      * To initialize for failed and immediately completed requests.
@@ -49,7 +58,18 @@ public class UcpRequest extends UcxNativeStruct implements Closeable {
      * @return whether this request is completed.
      */
     public boolean isCompleted() {
-        return (getNativeId() == null) || isCompletedNative(getNativeId());
+        if (isCloseRequest) {
+            updateRequestStatus(getNativeId());
+        }
+
+        return (status != UcsConstants.STATUS.UCS_INPROGRESS);
+    }
+
+    /**
+     * @return status of the current request
+     */
+    public int getStatus() {
+        return status;
     }
 
     /**
@@ -65,7 +85,7 @@ public class UcpRequest extends UcxNativeStruct implements Closeable {
         }
     }
 
-    private static native boolean isCompletedNative(long ucpRequest);
+    private native void updateRequestStatus(long ucpRequest);
 
     private static native void closeRequestNative(long ucpRequest);
 }

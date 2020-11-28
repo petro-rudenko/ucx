@@ -52,18 +52,6 @@ typedef uintptr_t native_ptr;
  */
 bool j2cInetSockAddr(JNIEnv *env, jobject sock_addr, sockaddr_storage& ss, socklen_t& sa_len);
 
-struct jucx_context {
-    jobject callback;
-    volatile jobject jucx_request;
-    ucs_status_t status;
-    ucs_recursive_spinlock_t lock;
-    size_t length;
-    ucp_dt_iov_t* iovec;
-    ucp_tag_t sender_tag;
-};
-
-void jucx_request_init(void *request);
-
 /**
  * @brief Get the jni env object. To be able to call java methods from ucx async callbacks.
  */
@@ -72,29 +60,28 @@ JNIEnv* get_jni_env();
 /**
  * @brief Send callback used to invoke java callback class on completion of ucp operations.
  */
-void jucx_request_callback(void *request, ucs_status_t status);
+void jucx_request_callback(void *request, ucs_status_t status, void *user_data);
 
 /**
  * @brief Recv callback used to invoke java callback class on completion of ucp tag_recv_nb operation.
  */
-void recv_callback(void *request, ucs_status_t status, ucp_tag_recv_info_t *info);
+void recv_callback(void *request, ucs_status_t status, const ucp_tag_recv_info_t *info, void *user_data);
 
 /**
  * @brief Recv callback used to invoke java callback class on completion of ucp stream_recv_nb operation.
  */
-void stream_recv_callback(void *request, ucs_status_t status, size_t length);
+void stream_recv_callback(void *request, ucs_status_t status, size_t length, void *user_data);
 
 /**
- * @brief Utility to process request logic: if request is pointer - set callback to request context.
- * If request is status - call callback directly.
- * Returns jucx_request object, that could be monitored on completion.
+ * @brief Utility to allocate jucx request and set appropriate java callback in it.
  */
-jobject process_request(void *request, jobject callback);
+jobject allocate_jucx_request(JNIEnv *env, jobject callback, ucp_request_param_t *param);
 
-/**
- * @brief Call java callback on completed stream recv operation, that didn't invoke callback.
- */
-jobject process_completed_stream_recv(size_t length, jobject callback);
+void set_jucx_request_iov(JNIEnv *env, jobject request, ucp_dt_iov_t* iovec);
+
+void process_request(JNIEnv *env, jobject request, ucs_status_ptr_t status);
+
+void update_jucx_request_status(JNIEnv *env, jobject jucx_request, ucs_status_t status);
 
 void jucx_connection_handler(ucp_conn_request_h conn_request, void *arg);
 
@@ -134,7 +121,6 @@ UCS_F_ALWAYS_INLINE ucp_dt_iov_t* get_ucp_iov(JNIEnv *env,
 
     env->ReleaseLongArrayElements(addr_array, addresses, 0);
     env->ReleaseLongArrayElements(size_array, sizes, 0);
-
     return iovec;
 }
 

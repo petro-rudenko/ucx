@@ -169,7 +169,6 @@ UCS_TEST_P(test_ucp_tag_probe, send_rndv_msg_probe, "RNDV_THRESH=1048576") {
     ucp_request_param_t param;
     param.op_attr_mask = UCP_OP_ATTR_FIELD_CALLBACK | UCP_OP_ATTR_FIELD_DATATYPE |
                          UCP_OP_ATTR_FLAG_NO_IMM_CMPL;
-    param.user_data    = NULL;
     param.cb.recv      = recv_callback;
     param.datatype     = DATATYPE;
 

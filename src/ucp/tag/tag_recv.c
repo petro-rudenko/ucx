@@ -255,15 +255,13 @@ UCS_PROFILE_FUNC(ucs_status_ptr_t, ucp_tag_msg_recv_nbx,
                                     return UCS_STATUS_PTR(UCS_ERR_INVALID_PARAM));
     UCP_WORKER_THREAD_CS_ENTER_CONDITIONAL(worker);
 
-    req = ucp_request_get_param(worker, param,
-                                {ret = UCS_STATUS_PTR(UCS_ERR_NO_MEMORY);
-                                goto out;});
-
+    req      = ucp_request_get_param(worker, param,
+                                     {ret = UCS_STATUS_PTR(UCS_ERR_NO_MEMORY);
+                                     goto out;});
     datatype = ucp_request_param_datatype(param);
-
-    ret = ucp_tag_recv_common(worker, buffer, count, datatype,
-                              ucp_rdesc_get_tag(rdesc), UCP_TAG_MASK_FULL,
-                              req, rdesc, param, "msg_recv_nbx");
+    ret      =  ucp_tag_recv_common(worker, buffer, count, datatype,
+                                    ucp_rdesc_get_tag(rdesc), UCP_TAG_MASK_FULL,
+                                    req, rdesc, param, "msg_recv_nbx");
 
 out:
     UCP_WORKER_THREAD_CS_EXIT_CONDITIONAL(worker);

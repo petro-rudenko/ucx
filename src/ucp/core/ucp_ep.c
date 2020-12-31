@@ -1065,6 +1065,7 @@ ucs_status_ptr_t ucp_ep_close_nbx(ucp_ep_h ep, const ucp_request_param_t *param)
                 ucp_ep_cm_disconnect_cm_lane(ep);
                 close_req = ucp_ep_cm_close_request_get(ep);
                 if (close_req != NULL) {
+                    ucp_request_set_send_callback_param(param, close_req, send);
                     request = close_req + 1;
                     ucp_ep_set_close_request(ep, close_req, "close");
                 } else {

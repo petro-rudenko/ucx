@@ -102,7 +102,7 @@ static int ucp_cm_client_try_fallback_cms(ucp_ep_h ep)
 
 static ucp_rsc_index_t
 ucp_cm_tl_bitmap_get_dev_idx(ucp_context_h context, uint64_t tl_bitmap)
-{   
+{
     ucp_rsc_index_t rsc_index;
     ucp_rsc_index_t dev_index;
 
@@ -1205,14 +1205,17 @@ void ucp_ep_cm_disconnect_cm_lane(ucp_ep_h ucp_ep)
     }
 }
 
-ucp_request_t* ucp_ep_cm_close_request_get(ucp_ep_h ep)
+ucp_request_t* ucp_ep_cm_close_request_get(ucp_ep_h ep, const ucp_request_param_t *param)
 {
-    ucp_request_t *request = ucp_request_get(ep->worker);
+    ucp_request_t *request = ucp_request_get_param(ep->worker, param,
+                             {return UCS_STATUS_PTR(UCS_ERR_NO_MEMORY);});
 
     if (request == NULL) {
         ucs_error("failed to allocate close request for ep %p", ep);
         return NULL;
     }
+
+    ucp_request_set_send_callback_param(param, request, send);
 
     request->status  = UCS_OK;
     request->flags   = 0;

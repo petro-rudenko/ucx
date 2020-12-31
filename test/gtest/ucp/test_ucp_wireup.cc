@@ -58,6 +58,8 @@ protected:
 
     void waitall(std::vector<void*> reqs);
 
+    void flush_and_close(ucp_ep_h ep, const ucp_request_param_t *param);
+
     void disconnect(ucp_ep_h ep);
 
     void disconnect(ucp_test::entity &e);
@@ -366,6 +368,20 @@ void test_ucp_wireup::waitall(std::vector<void*> reqs)
     while (!reqs.empty()) {
         request_wait(reqs.back());
         reqs.pop_back();
+    }
+}
+
+void test_ucp_wireup::flush_and_close(ucp_ep_h ep, const ucp_request_param_t *param)
+{
+    request_wait(ucp_ep_flush_nbx(ep, param));
+
+    if (ucp_ep_is_cm_local_connected(ep)) {
+        /* lanes already flushed, start disconnect on CM lane */
+        ucp_ep_cm_disconnect_cm_lane(ep);
+        ucp_request_t *close_req = ucp_ep_cm_close_request_get(ep, param);
+        if (close_req != NULL) {
+            ucp_ep_set_close_request(ep, close_req, "close");
+        }
     }
 }
 
@@ -841,6 +857,28 @@ UCS_TEST_P(test_ucp_wireup_2sided, close_nbx_callback) {
     }
 
     waitall(reqs);
+}
+
+UCS_TEST_P(test_ucp_wireup_2sided, close_callback) {
+    sender().connect(&receiver(), get_ep_params());
+    if (!is_loopback()) {
+        receiver().connect(&sender(), get_ep_params());
+    }
+
+    std::vector<void *> reqs;
+    ucp_request_param_t param;
+
+    param.op_attr_mask = UCP_OP_ATTR_FIELD_CALLBACK  |
+                         UCP_OP_ATTR_FIELD_USER_DATA |
+                         UCP_OP_ATTR_FLAG_NO_IMM_CMPL;
+    param.cb.send      = close_completion;
+    param.user_data    = this;
+
+    flush_and_close(sender().revoke_ep(), &param);
+
+    if (!is_loopback()) {
+        flush_and_close(receiver().revoke_ep(), &param);
+    }
 }
 
 UCS_TEST_P(test_ucp_wireup_2sided, multi_ep_2sided) {

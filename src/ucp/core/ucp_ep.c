@@ -1063,9 +1063,8 @@ ucs_status_ptr_t ucp_ep_close_nbx(ucp_ep_h ep, const ucp_request_param_t *param)
             if (ucp_ep_is_cm_local_connected(ep)) {
                 /* lanes already flushed, start disconnect on CM lane */
                 ucp_ep_cm_disconnect_cm_lane(ep);
-                close_req = ucp_ep_cm_close_request_get(ep);
+                close_req = ucp_ep_cm_close_request_get(ep, param);
                 if (close_req != NULL) {
-                    ucp_request_set_send_callback_param(param, close_req, send);
                     request = close_req + 1;
                     ucp_ep_set_close_request(ep, close_req, "close");
                 } else {

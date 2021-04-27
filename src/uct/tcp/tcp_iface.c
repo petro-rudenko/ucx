@@ -29,7 +29,7 @@ static ucs_config_field_t uct_tcp_iface_config_table[] = {
   {"TX_SEG_SIZE", "8kb",
    "Size of send copy-out buffer",
    ucs_offsetof(uct_tcp_iface_config_t, tx_seg_size), UCS_CONFIG_TYPE_MEMUNITS},
-  
+
   {"RX_SEG_SIZE", "64kb",
    "Size of receive copy-out buffer",
    ucs_offsetof(uct_tcp_iface_config_t, rx_seg_size), UCS_CONFIG_TYPE_MEMUNITS},
@@ -84,6 +84,10 @@ static ucs_config_field_t uct_tcp_iface_config_table[] = {
    "Generate a random TCP port number from that range. A value of zero means\n"
    "let the operating system select the port number.",
    ucs_offsetof(uct_tcp_iface_config_t, port_range), UCS_CONFIG_TYPE_RANGE_SPEC},
+
+  {"LOOPBACK_ENABLE", "n",
+   "Enable loopback interface for TCP device selection.",
+   ucs_offsetof(uct_tcp_iface_config_t, loopback_enable), UCS_CONFIG_TYPE_BOOL},
 
 #ifdef UCT_TCP_EP_KEEPALIVE
   {"KEEPIDLE", UCS_PP_MAKE_STRING(UCT_TCP_EP_DEFAULT_KEEPALIVE_IDLE) "s",
@@ -733,6 +737,8 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
     unsigned num_devices;
     ucs_status_t status;
     DIR *dir;
+    uct_iface_config_t *config;
+    uct_tcp_iface_config_t *iface_config;
 
     dir = opendir(netdev_dir);
     if (dir == NULL) {
@@ -766,7 +772,10 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
             continue;
         }
 
-        if (!ucs_netif_is_active(entry->d_name)) {
+        uct_md_iface_config_read(md, "tcp", NULL, NULL, &config);
+        iface_config = ucs_derived_of(config, uct_tcp_iface_config_t);
+
+        if (!ucs_netif_is_active(entry->d_name, iface_config->loopback_enable)) {
             continue;
         }
 

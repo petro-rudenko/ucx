@@ -978,6 +978,7 @@ run_io_demo() {
 	fi
 
 	export UCX_SOCKADDR_CM_ENABLE=y
+	export UCX_TCP_LOOPBACK_ENABLE=y
 
 	for server_ip in $server_rdma_addr $server_loopback_addr
 	do
@@ -985,6 +986,7 @@ run_io_demo() {
 	done
 
 	unset UCX_SOCKADDR_CM_ENABLE
+	unset UCX_TCP_LOOPBACK_ENABLE
 	make_clean
 }
 

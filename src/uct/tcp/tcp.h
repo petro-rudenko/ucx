@@ -405,6 +405,7 @@ typedef struct uct_tcp_iface_config {
     uct_iface_mpool_config_t       tx_mpool;
     uct_iface_mpool_config_t       rx_mpool;
     ucs_range_spec_t               port_range;
+    int                            loopback_enable;
     struct {
         ucs_time_t                 idle;
         unsigned                   cnt;

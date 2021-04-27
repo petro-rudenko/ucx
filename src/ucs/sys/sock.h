@@ -70,11 +70,13 @@ ucs_status_t ucs_netif_ioctl(const char *if_name, unsigned long request,
 /**
  * Check if the given interface is in an active state.
  *
- * @param [in]  if_name      Interface name to check.
+ * @param [in]  if_name          Interface name to check.
+ * @param [in]  enable_loopback  Whether to consider loopback
+ *                               address as an active interface.
  *
  * @return 1 if true, otherwise 0
  */
-int ucs_netif_is_active(const char *if_name);
+int ucs_netif_is_active(const char *if_name, int enable_loopback);
 
 
 /**
@@ -319,7 +321,7 @@ ucs_status_t ucs_socket_recv(int fd, void *data, size_t length);
 
 /**
  * Return size of a given sockaddr structure.
- * 
+ *
  * @param [in]   addr       Pointer to sockaddr structure.
  * @param [out]  size_p     Pointer to variable where size of
  *                          sockaddr_in/sockaddr_in6 structure will be written
@@ -331,7 +333,7 @@ ucs_status_t ucs_sockaddr_sizeof(const struct sockaddr *addr, size_t *size_p);
 
 /**
  * Return port of a given sockaddr structure.
- * 
+ *
  * @param [in]   addr       Pointer to sockaddr structure.
  * @param [out]  port_p     Pointer to variable where port (host notation)
  *                          of sockaddr_in/sockaddr_in6 structure will be written
@@ -343,7 +345,7 @@ ucs_status_t ucs_sockaddr_get_port(const struct sockaddr *addr, uint16_t *port_p
 
 /**
  * Set port to a given sockaddr structure.
- * 
+ *
  * @param [in]   addr       Pointer to sockaddr structure.
  * @param [in]   port       Port (host notation) that will be written
  *
@@ -354,7 +356,7 @@ ucs_status_t ucs_sockaddr_set_port(struct sockaddr *addr, uint16_t port);
 
 /**
  * Return IP addr of a given sockaddr structure.
- * 
+ *
  * @param [in]   addr       Pointer to sockaddr structure.
  *
  * @return IP address of sockaddr_in/sockaddr_in6 structure
@@ -437,7 +439,7 @@ int ucs_sockaddr_ip_cmp(const struct sockaddr *sa1, const struct sockaddr *sa2);
 
 /**
  * Indicate if given IP addr is INADDR_ANY (IPV4) or in6addr_any (IPV6)
- * 
+ *
  * @param [in]   addr       Pointer to sockaddr structure.
  *
  * @return 1 if input is INADDR_ANY or in6addr_any

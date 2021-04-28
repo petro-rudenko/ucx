@@ -405,7 +405,6 @@ typedef struct uct_tcp_iface_config {
     uct_iface_mpool_config_t       tx_mpool;
     uct_iface_mpool_config_t       rx_mpool;
     ucs_range_spec_t               port_range;
-    int                            loopback_enable;
     struct {
         ucs_time_t                 idle;
         unsigned                   cnt;
@@ -413,6 +412,13 @@ typedef struct uct_tcp_iface_config {
     } keepalive;
 } uct_tcp_iface_config_t;
 
+/**
+ * TCP md configuration
+ */
+typedef struct uct_tcp_md_config {
+    uct_md_config_t super;
+    uint8_t  loopback_enable;
+} uct_tcp_md_config_t;
 
 extern uct_component_t uct_tcp_component;
 extern const char *uct_tcp_address_type_names[];

@@ -70,13 +70,21 @@ ucs_status_t ucs_netif_ioctl(const char *if_name, unsigned long request,
 /**
  * Check if the given interface is in an active state.
  *
- * @param [in]  if_name          Interface name to check.
- * @param [in]  enable_loopback  Whether to consider loopback
- *                               address as an active interface.
+ * @param [in]  if_name      Interface name to check.
  *
  * @return 1 if true, otherwise 0
  */
-int ucs_netif_is_active(const char *if_name, int enable_loopback);
+int ucs_netif_is_active(const char *if_name);
+
+
+/**
+ * Check if the given interface is a loopback.
+ *
+ * @param       if_name      Interface name to check.
+ *
+ * @return 1 if true, otherwise 0
+ */
+int ucs_netif_is_loopback(const char *if_name);
 
 
 /**

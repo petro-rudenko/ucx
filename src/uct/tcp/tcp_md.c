@@ -12,6 +12,12 @@
 #include <uct/base/uct_md.h>
 
 
+static ucs_config_field_t uct_tcp_md_config_table[] = {
+    {"LOOPBACK_ENABLE", "n",
+    "Enable loopback interface for TCP device selection.",
+    ucs_offsetof(uct_tcp_md_config_t, loopback_enable), UCS_CONFIG_TYPE_BOOL},
+};
+
 static ucs_status_t uct_tcp_md_query(uct_md_h md, uct_md_attr_t *attr)
 {
     /* Dummy memory registration provided. No real memory handling exists */
@@ -79,7 +85,12 @@ uct_component_t uct_tcp_component = {
     .rkey_ptr           = ucs_empty_function_return_unsupported,
     .rkey_release       = ucs_empty_function_return_success,
     .name               = UCT_TCP_NAME,
-    .md_config          = UCT_MD_DEFAULT_CONFIG_INITIALIZER,
+    .md_config          = {
+        .name           = "TCP memory domain",
+        .prefix         = "TCP_",
+        .table          = uct_tcp_md_config_table,
+        .size           = sizeof(uct_tcp_md_config_t),
+    },
     .cm_config          = {
         .name           = "TCP-SOCKCM connection manager",
         .prefix         = "TCP_CM_",

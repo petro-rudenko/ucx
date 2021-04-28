@@ -85,10 +85,6 @@ static ucs_config_field_t uct_tcp_iface_config_table[] = {
    "let the operating system select the port number.",
    ucs_offsetof(uct_tcp_iface_config_t, port_range), UCS_CONFIG_TYPE_RANGE_SPEC},
 
-  {"LOOPBACK_ENABLE", "n",
-   "Enable loopback interface for TCP device selection.",
-   ucs_offsetof(uct_tcp_iface_config_t, loopback_enable), UCS_CONFIG_TYPE_BOOL},
-
 #ifdef UCT_TCP_EP_KEEPALIVE
   {"KEEPIDLE", UCS_PP_MAKE_STRING(UCT_TCP_EP_DEFAULT_KEEPALIVE_IDLE) "s",
    "The time the connection needs to remain idle before TCP starts sending "
@@ -738,7 +734,7 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
     ucs_status_t status;
     DIR *dir;
     uct_iface_config_t *config;
-    uct_tcp_iface_config_t *iface_config;
+    uct_tcp_md_config_t *md_config;
 
     dir = opendir(netdev_dir);
     if (dir == NULL) {
@@ -773,9 +769,13 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
         }
 
         uct_md_iface_config_read(md, "tcp", NULL, NULL, &config);
-        iface_config = ucs_derived_of(config, uct_tcp_iface_config_t);
+        md_config = ucs_derived_of(config, uct_tcp_iface_config_t);
 
-        if (!ucs_netif_is_active(entry->d_name, iface_config->loopback_enable)) {
+        if (!ucs_netif_is_active(entry->d_name)) {
+            continue;
+        }
+
+        if (!md_config->loopback_enable && ucs_netif_is_loopback(entry->d_name)) {
             continue;
         }
 

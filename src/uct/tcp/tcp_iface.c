@@ -733,8 +733,7 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
     unsigned num_devices;
     ucs_status_t status;
     DIR *dir;
-    uct_md_config_t *md_config;
-    uct_tcp_md_config_t *tcp_md_config;
+    uct_tcp_md_t *tcp_md = ucs_derived_of(md, uct_tcp_md_t);
 
     dir = opendir(netdev_dir);
     if (dir == NULL) {
@@ -768,14 +767,11 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
             continue;
         }
 
-        uct_md_config_read(md->component, "tcp", NULL, &md_config);
-        tcp_md_config = ucs_derived_of(md_config, uct_tcp_md_config_t);
-
         if (!ucs_netif_is_active(entry->d_name)) {
             continue;
         }
 
-        if (!tcp_md_config->loopback_enable && ucs_netif_is_loopback(entry->d_name)) {
+        if (!tcp_md->loopback_enable && ucs_netif_is_loopback(entry->d_name)) {
             continue;
         }
 

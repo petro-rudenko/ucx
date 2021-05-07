@@ -243,6 +243,43 @@ UCS_TEST_P(test_ucp_mmap, alloc) {
     }
 }
 
+UCS_TEST_P(test_ucp_mmap, alloc_cuda) {
+    std::vector<ucs_memory_type_t> mem_types = mem_buffer::supported_mem_types();
+    ucs_status_t status;
+    bool is_dummy;
+
+
+    if (std::find(mem_types.begin(), mem_types.end(),
+                  UCS_MEMORY_TYPE_CUDA) == mem_types.end()) {
+        UCS_TEST_SKIP_R("cuda memory unsupported");
+    }
+
+    for (int i = 0; i < 100 / ucs::test_time_multiplier(); ++i) {
+        size_t size = ucs::rand() % (UCS_MBYTE);
+
+        ucp_mem_h memh;
+        ucp_mem_map_params_t params;
+        params.field_mask  = UCP_MEM_MAP_PARAM_FIELD_ADDRESS |
+                             UCP_MEM_MAP_PARAM_FIELD_LENGTH  |
+                             UCP_MEM_MAP_PARAM_FIELD_FLAGS   |
+                             UCP_MEM_MAP_PARAM_FIELD_MEMORY_TYPE;
+        params.address     = NULL;
+        params.memory_type = UCS_MEMORY_TYPE_CUDA;
+        params.length      = size;
+        params.flags       = UCP_MEM_MAP_ALLOCATE;
+
+        status = ucp_mem_map(sender().ucph(), &params, &memh);
+
+        ASSERT_UCS_OK(status);
+
+        is_dummy = (size == 0);
+        test_rkey_management(memh, is_dummy, is_tl_rdma() || is_tl_shm());
+
+        status = ucp_mem_unmap(sender().ucph(), memh);
+        ASSERT_UCS_OK(status);
+    }
+}
+
 UCS_TEST_P(test_ucp_mmap, reg) {
     ucs_status_t status;
     bool is_dummy;

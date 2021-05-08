@@ -192,12 +192,6 @@ static ucs_status_t ucp_mem_alloc(ucp_context_h context, size_t length,
     {
         method = context->config.alloc_methods[method_index].method;
 
-        /* Non-host memory allocation supported on METHOD_MD alone */
-        if ((memh->mem_type != UCS_MEMORY_TYPE_HOST)
-            && (method != UCT_ALLOC_METHOD_MD)) {
-            continue;
-        }
-
         /* If we are trying MD method, gather all MDs which match the component
          * name specified in the configuration.
          */
@@ -327,7 +321,8 @@ static ucs_status_t ucp_mem_map_common(ucp_context_h context, void *address,
     }
 
     ucs_debug("%s buffer %p length %zu type %s memh %p md_map 0x%"PRIx64,
-              (memh->alloc_method == UCT_ALLOC_METHOD_LAST) ? "mapped" : "allocated",
+              (memh->alloc_method == UCT_ALLOC_METHOD_LAST) ? "mapped" :
+                                                              "allocated",
               memh->address, memh->length,
               ucs_memory_type_names[memh->mem_type], memh, memh->md_map);
     *memh_p = memh;
@@ -417,14 +412,6 @@ ucs_status_t ucp_mem_map(ucp_context_h context, const ucp_mem_map_params_t *para
         goto out;
     }
 
-    if (((flags & UCP_MEM_MAP_FIXED) || (flags & UCP_MEM_MAP_NONBLOCK)) &&
-        ((params->field_mask & UCP_MEM_MAP_PARAM_FIELD_MEMORY_TYPE)
-         && (params->memory_type != UCS_MEMORY_TYPE_HOST))) {
-        ucs_error("UCP_MEM_MAP_FIXED/NONBLOCK unsupported with non-host mem");
-        status = UCS_ERR_INVALID_PARAM;
-        goto out;
-    }
-
     if (address == NULL) {
         if (!(flags & UCP_MEM_MAP_ALLOCATE) && (params->length > 0)) {
             ucs_error("Undefined address with nonzero length requires "
@@ -446,8 +433,8 @@ ucs_status_t ucp_mem_map(ucp_context_h context, const ucp_mem_map_params_t *para
     }
 
     if (flags & UCP_MEM_MAP_ALLOCATE) {
-        memory_type = (params->field_mask & UCP_MEM_MAP_PARAM_FIELD_MEMORY_TYPE)
-                      ? params->memory_type : UCS_MEMORY_TYPE_HOST;
+        memory_type = UCP_PARAM_VALUE(MEM_MAP, params, memory_type, MEMORY_TYPE,
+                                      UCS_MEMORY_TYPE_HOST);
     } else if (!(params->field_mask & UCP_MEM_MAP_PARAM_FIELD_MEMORY_TYPE) ||
                (params->memory_type == UCS_MEMORY_TYPE_UNKNOWN)) {
         ucp_memory_detect(context, address, params->length, &mem_info);

@@ -249,7 +249,7 @@ UCS_TEST_P(test_ucp_mmap, alloc_mem_type) {
     bool expect_rma_offload;
 
     for (ucs_memory_type_t mem_type : mem_buffer::supported_mem_types()) {
-        for (int i = 0; i < 100 / ucs::test_time_multiplier(); ++i) {
+        for (int i = 0; i < (100 / ucs::test_time_multiplier()); ++i) {
             size_t size = ucs::rand() % (UCS_MBYTE);
 
             ucp_mem_h memh;

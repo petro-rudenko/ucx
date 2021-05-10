@@ -320,7 +320,7 @@ static ucs_status_t ucp_mem_map_common(ucp_context_h context, void *address,
         }
     }
 
-    ucs_debug("%s buffer %p length %zu type %s memh %p md_map 0x%"PRIx64,
+    ucs_debug("%s buffer %p length %zu type %s memh %p md_map 0x%" PRIx64,
               (memh->alloc_method == UCT_ALLOC_METHOD_LAST) ? "mapped" :
                                                               "allocated",
               memh->address, memh->length,

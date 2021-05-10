@@ -269,7 +269,7 @@ UCS_TEST_P(test_ucp_mmap, alloc_mem_type) {
 
             ASSERT_UCS_OK(status);
 
-            is_dummy = (size == 0);
+            is_dummy           = (size == 0);
             expect_rma_offload = ((*mem_type != UCS_MEMORY_TYPE_CUDA_MANAGED) &&
                                   (is_tl_rdma() || is_tl_shm()));
             test_rkey_management(memh, is_dummy, expect_rma_offload);

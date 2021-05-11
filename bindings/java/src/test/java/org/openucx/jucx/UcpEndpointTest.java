@@ -57,7 +57,7 @@ public class UcpEndpointTest extends UcxTest {
     public void testGetNB(int memType) throws Exception {
         System.out.println("Running testGetNB with memType: " + memType);
         // Crerate 2 contexts + 2 workers
-        UcpParams params = new UcpParams().requestRmaFeature();
+        UcpParams params = new UcpParams().requestRmaFeature().requestTagFeature();
         UcpWorkerParams rdmaWorkerParams = new UcpWorkerParams().requestWakeupRMA();
         UcpContext context1 = new UcpContext(params);
         UcpContext context2 = new UcpContext(params);
@@ -119,7 +119,7 @@ public class UcpEndpointTest extends UcxTest {
     public void testPutNB(int memType) throws Exception {
         System.out.println("Running testPutNB with memType: " + memType);
         // Crerate 2 contexts + 2 workers
-        UcpParams params = new UcpParams().requestRmaFeature();
+        UcpParams params = new UcpParams().requestRmaFeature().requestTagFeature();
         UcpWorkerParams rdmaWorkerParams = new UcpWorkerParams().requestWakeupRMA();
         UcpContext context1 = new UcpContext(params);
         UcpContext context2 = new UcpContext(params);

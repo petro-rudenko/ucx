@@ -464,12 +464,12 @@ public class UcpEndpointTest extends UcxTest {
         closeResources();
     }
 
-    @Theory
-    public void testIovOperations(int memType) throws Exception {
-        System.out.println("Running testIovOperations with memType: " + memType);
+    @Test
+    public void testIovOperations() throws Exception {
         int NUM_IOV = 6;
         long buffMultiplier = 10L;
 
+        UcpMemMapParams memMapParams = new UcpMemMapParams().allocate();
         // Crerate 2 contexts + 2 workers
         UcpParams params = new UcpParams().requestTagFeature().requestStreamFeature();
         UcpWorkerParams workerParams = new UcpWorkerParams();
@@ -484,12 +484,10 @@ public class UcpEndpointTest extends UcxTest {
         UcpEndpoint recvEp = worker2.newEndpoint(new UcpEndpointParams()
             .setUcpAddress(worker1.getAddress()));
 
-        MemoryBlock[] sendMemory = new MemoryBlock[NUM_IOV];
         UcpMemory[] sendBuffers = new UcpMemory[NUM_IOV];
         long[] sendAddresses = new long[NUM_IOV];
         long[] sizes = new long[NUM_IOV];
 
-        MemoryBlock[] recvMemory = new MemoryBlock[NUM_IOV];
         UcpMemory[] recvBuffers = new UcpMemory[NUM_IOV];
         long[] recvAddresses = new long[NUM_IOV];
 
@@ -498,16 +496,16 @@ public class UcpEndpointTest extends UcxTest {
         for (int i = 0; i < NUM_IOV; i++) {
             long bufferSize = (i + 1) * buffMultiplier;
             totalSize += bufferSize;
+            memMapParams.setLength(bufferSize);
 
-            sendMemory[i] = allocateMemory(context1, worker1, memType, bufferSize);
-            sendBuffers[i] = sendMemory[i].getMemory();
+            sendBuffers[i] = context1.memoryMap(memMapParams);
             sendAddresses[i] = sendBuffers[i].getAddress();
             sizes[i] = bufferSize;
 
-            sendMemory[i].setData(String.valueOf(i + 1));
+            ByteBuffer buf = UcxUtils.getByteBufferView(sendAddresses[i], (int)bufferSize);
+            buf.putInt(0, (i + 1));
 
-            recvMemory[i] = allocateMemory(context2, worker2, memType, bufferSize);
-            recvBuffers[i] = recvMemory[i].getMemory();
+            recvBuffers[i] = context2.memoryMap(memMapParams);
             recvAddresses[i] = recvBuffers[i].getAddress();
         }
 
@@ -522,13 +520,12 @@ public class UcpEndpointTest extends UcxTest {
         assertEquals(totalSize, recv.getRecvSize());
 
         for (int i = 0; i < NUM_IOV; i++) {
-            assertEquals(String.valueOf(i + 1),
-                recvMemory[i].getData().asCharBuffer().toString().trim());
-            recvMemory[i].close();
+            ByteBuffer buf = UcxUtils.getByteBufferView(recvAddresses[i], (int)sizes[i]);
+            assertEquals((i + 1), buf.getInt(0));
+            recvBuffers[i].deregister();
         }
 
         // Test 6 send IOV to 3 recv IOV
-        recvMemory = new MemoryBlock[NUM_IOV / 2];
         recvBuffers = new UcpMemory[NUM_IOV / 2];
         recvAddresses = new long[NUM_IOV / 2];
         long[] recvSizes = new long[NUM_IOV / 2];
@@ -537,8 +534,7 @@ public class UcpEndpointTest extends UcxTest {
         for (int i = 0; i < NUM_IOV / 2; i++) {
             long bufferLength = (i + 1) * buffMultiplier * 2;
             totalSize += bufferLength;
-            recvMemory[i] = allocateMemory(context2, worker2, memType, bufferLength);
-            recvBuffers[i] = recvMemory[i].getMemory();
+            recvBuffers[i] = context2.memoryMap(memMapParams.setLength(bufferLength));
             recvAddresses[i] = recvBuffers[i].getAddress();
             recvSizes[i] = bufferLength;
         }
@@ -552,11 +548,12 @@ public class UcpEndpointTest extends UcxTest {
         }
 
         assertEquals(totalSize, recv.getRecvSize());
-        assertEquals('1', recvMemory[0].getData().asCharBuffer().get(0));
+        ByteBuffer buf = UcxUtils.getByteBufferView(recvAddresses[0], (int)recvSizes[0]);
+        assertEquals(1, buf.getInt(0));
 
         Collections.addAll(resources, context1, context2, worker1, worker2, ep);
-        Collections.addAll(resources, sendMemory);
-        Collections.addAll(resources, recvMemory);
+        Collections.addAll(resources, sendBuffers);
+        Collections.addAll(resources, recvBuffers);
         closeResources();
     }
 

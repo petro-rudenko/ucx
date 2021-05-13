@@ -115,34 +115,33 @@ public class UcpEndpointTest extends UcxTest {
         closeResources();
     }
 
-    @Theory
-    public void testPutNB(int memType) throws Exception {
-        System.out.println("Running testPutNB with memType: " + memType);
+    @Test
+    public void testPutNB() throws Exception {
         // Crerate 2 contexts + 2 workers
-        UcpParams params = new UcpParams().requestRmaFeature().requestTagFeature();
+        UcpParams params = new UcpParams().requestRmaFeature();
         UcpWorkerParams rdmaWorkerParams = new UcpWorkerParams().requestWakeupRMA();
         UcpContext context1 = new UcpContext(params);
         UcpContext context2 = new UcpContext(params);
         UcpWorker worker1 = context1.newWorker(rdmaWorkerParams);
         UcpWorker worker2 = context2.newWorker(rdmaWorkerParams);
 
-        MemoryBlock src = allocateMemory(context1, worker1, memType, UcpMemoryTest.MEM_SIZE);
-        MemoryBlock dst = allocateMemory(context2, worker2, memType, UcpMemoryTest.MEM_SIZE);
+        ByteBuffer src = ByteBuffer.allocateDirect(UcpMemoryTest.MEM_SIZE);
+        ByteBuffer dst = ByteBuffer.allocateDirect(UcpMemoryTest.MEM_SIZE);
+        src.asCharBuffer().put(UcpMemoryTest.RANDOM_TEXT);
 
-        src.setData(UcpMemoryTest.RANDOM_TEXT);
-
+        // Register destination buffer on context2
+        UcpMemory memory = context2.registerMemory(dst);
         UcpEndpoint ep =
             worker1.newEndpoint(new UcpEndpointParams().setUcpAddress(worker2.getAddress()));
 
-        UcpRemoteKey rkey = ep.unpackRemoteKey(dst.getMemory().getRemoteKeyBuffer());
-        ep.putNonBlocking(src.getMemory().getAddress(), UcpMemoryTest.MEM_SIZE,
-            dst.getMemory().getAddress(), rkey, null);
+        UcpRemoteKey rkey = ep.unpackRemoteKey(memory.getRemoteKeyBuffer());
+        ep.putNonBlocking(src, memory.getAddress(), rkey, null);
 
         worker1.progressRequest(worker1.flushNonBlocking(null));
 
-        assertEquals(UcpMemoryTest.RANDOM_TEXT, dst.getData().asCharBuffer().toString().trim());
+        assertEquals(UcpMemoryTest.RANDOM_TEXT, dst.asCharBuffer().toString().trim());
 
-        Collections.addAll(resources, context2, context1, worker2, worker1, rkey, ep, src, dst);
+        Collections.addAll(resources, context2, context1, worker2, worker1, rkey, ep, memory);
         closeResources();
     }
 

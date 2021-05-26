@@ -73,7 +73,7 @@ public:
          *        where TX-queue less than FC_WND, so uct_flush cancel returns
          *        UCS_ERR_NO_RESOURCES and can not be handled after error
          */
-        modify_config("RC_FC_WND_SIZE", "128", SETENV_IF_NOT_EXIST); 
+        modify_config("RC_FC_WND_SIZE", "128", SETENV_IF_NOT_EXIST);
 
         get_sockaddr();
         ucp_test::init();
@@ -482,11 +482,13 @@ public:
 
         ep_params.field_mask      |= UCP_EP_PARAM_FIELD_FLAGS |
                                      UCP_EP_PARAM_FIELD_SOCK_ADDR |
-                                     UCP_EP_PARAM_FIELD_USER_DATA;
+                                     UCP_EP_PARAM_FIELD_USER_DATA |
+                                     UCP_EP_PARAM_FIELD_CLIENT_ID;
         ep_params.flags            = UCP_EP_PARAMS_FLAGS_CLIENT_SERVER;
         ep_params.sockaddr.addr    = m_test_addr.get_sock_addr_ptr();
         ep_params.sockaddr.addrlen = m_test_addr.get_addr_size();
         ep_params.user_data        = &sender();
+        ep_params.client_id        = 1L;
 
         sender().connect(&receiver(), ep_params);
     }

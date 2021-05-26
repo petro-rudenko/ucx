@@ -435,6 +435,7 @@ typedef struct {
 #if UCS_ENABLE_ASSERT
     size_t                   ka_count; /* Number of KA rounds done */
 #endif
+    uint64_t                 client_id; /* Client EP ID */
 } ucp_ep_ext_control_t;
 
 
@@ -496,6 +497,7 @@ struct ucp_wireup_sockaddr_data {
                                                   build remote address in
                                                   UCP_WIREUP_SA_DATA_CM_ADDR
                                                   mode */
+    uint64_t                  client_id;     /**< Endpoint client id */
     /* packed worker address follows */
 } UCS_S_PACKED;
 
